@@ -1,4 +1,4 @@
-import { Controller, Post, Param } from '@nestjs/common';
+import { Controller, Post, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 
@@ -6,8 +6,8 @@ import { AuthDto } from './dto/auth.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('/:code')
-  create(@Param() authDto: AuthDto) {
+  @Post('/')
+  create(@Query() authDto: AuthDto) {
     return this.authService.postAuthTo42(authDto);
   }
 }
