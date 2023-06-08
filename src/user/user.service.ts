@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma.service';
@@ -9,15 +9,19 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto) {
     const { ftId, email, name } = createUserDto;
-    const user = await this.prismaService.user.create({
-      data: {
-        ftId,
-        email,
-        name,
-      },
-    });
-    console.log(`New user '${user.name}' is added`);
-    return user;
+
+    try {
+      const user = await this.prismaService.user.create({
+        data: {
+          ftId,
+          email,
+          name,
+        },
+      });
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
   async findAll() {

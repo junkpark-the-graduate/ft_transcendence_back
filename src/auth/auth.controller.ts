@@ -1,4 +1,4 @@
-import { Controller, Post, Query } from '@nestjs/common';
+import { Controller, Post, Query, Get, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { AuthDto } from './dto/auth.dto';
@@ -11,7 +11,20 @@ export class AuthController {
   ) {}
 
   @Post('/')
-  async create(@Query() authDto: AuthDto) {
-    return await this.authService.signIn(authDto);
+  async signIn(@Query() authDto: AuthDto) {
+    return this.authService.signIn(authDto);
+  }
+
+  @Get('/abc')
+  async asd(@Query() data: any, @Body() data2: any) {
+    console.log(data);
+    console.log(data2);
+    return '1234';
+  }
+
+  @Post('/abc')
+  async qwe(@Query() data: any) {
+    console.log(data);
+    return 'asdqwe';
   }
 }
