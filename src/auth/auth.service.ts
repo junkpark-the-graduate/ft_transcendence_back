@@ -18,20 +18,32 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signIn(authDto: AuthDto) {
-    const accessToken = await this.getAccessToken(authDto);
-    const { id, email, login, image } = await this.getUserInfo(accessToken);
-    let user = this.userService.findOne(id);
+  async signIn(authDto: AuthDto): Promise<any> {
+    try {
+      const accessToken = await this.getAccessToken(authDto);
+      const { id, email, login, image } = await this.getUserInfo(accessToken);
+      let user = await this.userService.findOne(id);
 
-    if (!user) {
-      user = this.userService.create({
-        ftId: id,
-        email: email,
-        name: login,
-      });
+      if (!user) {
+        user = await this.userService.create({
+          ftId: id,
+          email: email,
+          name: login,
+        });
+      }
+      const jwtToken = await this.createJwtToken(user.ftId);
+      console.log(jwtToken);
+      return { jwtToken };
+    } catch (err) {
+      console.log('* err: signIn: ', err.response.data);
     }
-    //createJwtToken(user)
   }
+
+  private createJwtToken = async (ftId: number): Promise<string> => {
+    const payload = { sub: ftId };
+    const jwtToken = await this.jwtService.signAsync(payload);
+    return jwtToken;
+  };
 
   private getAccessToken = async (authDto: AuthDto) => {
     try {

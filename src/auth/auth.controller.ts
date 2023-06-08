@@ -11,8 +11,7 @@ export class AuthController {
   ) {}
 
   @Post('/')
-  create(@Query() authDto: AuthDto) {
-    this.authService.ftToken(authDto);
-    this.userService.upsert();
+  async create(@Query() authDto: AuthDto) {
+    return await this.authService.signIn(authDto);
   }
 }
