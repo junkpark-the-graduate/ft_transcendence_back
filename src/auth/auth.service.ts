@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { AuthDto } from './dto/auth.dto';
 import axios from 'axios';
-import { PrismaService } from 'src/prisma.service';
 import { FtAuthService } from 'src/ft-auth/ft-auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
@@ -14,7 +13,6 @@ import { CreateUserDto } from 'src/user/dto/create-user.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prismaService: PrismaService,
     private userService: UserService,
     private ftAuthService: FtAuthService,
     private jwtService: JwtService,
