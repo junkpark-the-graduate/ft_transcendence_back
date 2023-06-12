@@ -13,14 +13,18 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const { ftId, email, name } = createUserDto;
+    const { ftId, email, name, image } = createUserDto;
 
     try {
-      const user = await this.userRepository.create({
+      const user = this.userRepository.create({
         ftId,
         email,
         name,
+        image,
       });
+
+      await this.userRepository.save(user);
+
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error.message);

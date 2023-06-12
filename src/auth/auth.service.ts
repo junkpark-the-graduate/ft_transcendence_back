@@ -32,6 +32,7 @@ export class AuthService {
           ftId: id,
           email: email,
           name: login,
+          image: image.versions.medium,
         });
       }
       const jwtToken = await this.createJwtToken(user.ftId);

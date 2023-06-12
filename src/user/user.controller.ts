@@ -41,8 +41,8 @@ export class UserController {
   })
   @ApiResponse({ status: 200, description: 'OK', type: User })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  findOne(@Param('id') id: number) {
+    return this.userService.findOne(id);
   }
 
   @Patch(':id')
@@ -51,7 +51,7 @@ export class UserController {
     description: '특정 id의 유저 정보 업데이트',
   })
   @ApiResponse({ status: 200, description: 'OK' })
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
+  update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(id, updateUserDto);
   }
 }

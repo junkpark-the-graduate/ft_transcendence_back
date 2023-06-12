@@ -18,4 +18,8 @@ export class User {
   @ApiProperty()
   @Column({ length: 50, nullable: false })
   name: string;
+
+  @ApiProperty()
+  @Column({ nullable: true })
+  image: string;
 }
