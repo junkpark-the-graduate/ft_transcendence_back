@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   UseGuards,
+  ValidationPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -38,7 +39,6 @@ export class UserController {
   @Get()
   @ApiOperation({
     summary: '전체 유저 조회 API',
-
     description: '접속 중인 유저 리스트 조회',
   })
   @ApiResponse({ status: 200, description: 'OK' })
