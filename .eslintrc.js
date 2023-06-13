@@ -5,14 +5,16 @@ module.exports = {
     tsconfigRootDir: __dirname,
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint/eslint-plugin'],
+  plugins: ['@typescript-eslint/eslint-plugin', '@darraghor/nestjs-typed'],
   extends: [
+    'plugin:@darraghor/nestjs-typed/recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
     'plugin:import/typescript',
   ],
   root: true,
   env: {
+    es6: true,
     node: true,
     jest: true,
   },

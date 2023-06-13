@@ -8,8 +8,4 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 3001
-
-VOLUME [ "/app/node_modules" ]
-
 CMD ["npm", "run", "start:dev"]
