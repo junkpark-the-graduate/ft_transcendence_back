@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -10,12 +18,14 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { User } from './user.entity';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('user')
 @ApiTags('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @UseGuards(AuthGuard('jwt'))
   @Post()
   @ApiOperation({ summary: '유저 생성 API', description: '유저를 생성' })
   @ApiCreatedResponse({ description: '유저를 생성', type: User })
@@ -24,9 +34,11 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get()
   @ApiOperation({
     summary: '전체 유저 조회 API',
+
     description: '접속 중인 유저 리스트 조회',
   })
   @ApiResponse({ status: 200, description: 'OK' })
@@ -34,6 +46,7 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   @ApiOperation({
     summary: '특정 유저 조회 API',
@@ -45,6 +58,7 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   @ApiOperation({
     summary: '특정 유저 업데이트 API',
