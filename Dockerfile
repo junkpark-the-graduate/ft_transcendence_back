@@ -12,7 +12,4 @@ EXPOSE 3001
 
 VOLUME [ "/app/node_modules" ]
 
-RUN ["npx", "prisma", "generate"]
-
-# CMD ["sh", "docker-entrypoint.sh"]
 CMD ["npm", "run", "start:dev"]

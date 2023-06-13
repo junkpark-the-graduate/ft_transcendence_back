@@ -1,23 +1,30 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { PrismaService } from 'src/prisma.service';
+import { Repository } from 'typeorm';
+import { User } from './user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const { ftId, email, name } = createUserDto;
+    const { ftId, email, name, image } = createUserDto;
 
     try {
-      const user = await this.prismaService.user.create({
-        data: {
-          ftId,
-          email,
-          name,
-        },
+      const user = this.userRepository.create({
+        ftId,
+        email,
+        name,
+        image,
       });
+
+      await this.userRepository.save(user);
+
       return user;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -29,7 +36,7 @@ export class UserService {
   }
 
   async findOne(id: number) {
-    const user = await this.prismaService.user.findFirst({
+    const user = await this.userRepository.findOne({
       where: {
         ftId: id,
       },
