@@ -7,6 +7,8 @@ import {
   Param,
   UseGuards,
   ValidationPipe,
+  Response,
+  Request,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -36,7 +38,7 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get()
+  @Get('/tmp')
   @ApiOperation({
     summary: '전체 유저 조회 API',
     description: '접속 중인 유저 리스트 조회',
@@ -47,22 +49,22 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get(':id')
+  @Get()
   @ApiOperation({
     summary: '특정 유저 조회 API',
-    description: 'id로 유저 조회',
+    description: 'accessToken으로 유저 조회',
   })
   @ApiResponse({ status: 200, description: 'OK', type: User })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  findOne(@Param('id') id: number) {
-    return this.userService.findOne(id);
+  findOne(@Request() req) {
+    return this.userService.findOne(req.user.ftId);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Patch(':id')
   @ApiOperation({
     summary: '특정 유저 업데이트 API',
-    description: '특정 id의 유저 정보 업데이트',
+    description: '특정 유저의 정보 업데이트',
   })
   @ApiResponse({ status: 200, description: 'OK' })
   update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {

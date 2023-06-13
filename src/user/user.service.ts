@@ -35,10 +35,10 @@ export class UserService {
     return `This action returns all user`;
   }
 
-  async findOne(id: number) {
+  async findOne(ftId: number) {
     const user = await this.userRepository.findOne({
       where: {
-        ftId: id,
+        ftId: ftId,
       },
     });
     return user;

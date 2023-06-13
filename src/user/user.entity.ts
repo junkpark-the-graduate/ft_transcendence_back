@@ -1,22 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
 
 @Entity()
 export class User {
+  @PrimaryColumn({ unique: true, nullable: false })
   @ApiProperty()
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @ApiProperty()
-  @Column({ unique: true, nullable: false })
   ftId: number;
 
   @ApiProperty()
-  @Column({ length: 250, nullable: false })
+  @Column({ unique: true, length: 250, nullable: false })
   email: string;
 
   @ApiProperty()
-  @Column({ length: 50, nullable: false })
+  @Column({ unique: true, length: 50, nullable: false })
   name: string;
 
   @ApiProperty()

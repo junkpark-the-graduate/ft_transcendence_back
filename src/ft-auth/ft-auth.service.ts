@@ -25,7 +25,14 @@ export class FtAuthService {
       const res = await axios.get(
         `https://api.intra.42.fr/v2/me?access_token=${accessToken}`,
       );
-      return res.data;
+      const { id, email, login, image } = res.data;
+
+      return {
+        ftId: id,
+        email,
+        login,
+        image,
+      };
     } catch (err) {}
   }
 }

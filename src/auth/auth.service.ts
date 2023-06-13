@@ -21,28 +21,27 @@ export class AuthService {
   // TODO any 타입 명확히 하기
   async signIn(authDto: AuthDto): Promise<any> {
     try {
-      const accessToken = await this.ftAuthService.getAccessToken(authDto);
-      const { id, email, login, image } = await this.ftAuthService.getUserInfo(
-        accessToken,
-      );
-      let user = await this.userService.findOne(id);
+      const ftAccessToken = await this.ftAuthService.getAccessToken(authDto);
+      const { ftId, email, login, image } =
+        await this.ftAuthService.getUserInfo(ftAccessToken);
+      let user = await this.userService.findOne(ftId);
 
       if (!user) {
         user = await this.userService.create({
-          ftId: id,
+          ftId: ftId,
           email: email,
           name: login,
           image: image.versions.medium,
         });
       }
-      const jwtToken = await this.createJwtToken(user.ftId);
-      return { jwtToken };
+      const accessToken = await this.createAccessToken(user.ftId);
+      return { accessToken };
     } catch (err) {}
   }
 
-  private createJwtToken = async (ftId: number): Promise<string> => {
+  private createAccessToken = async (ftId: number): Promise<string> => {
     const payload = { sub: ftId };
-    const jwtToken = await this.jwtService.signAsync(payload);
-    return jwtToken;
+    const accessToken = await this.jwtService.signAsync(payload);
+    return accessToken;
   };
 }
