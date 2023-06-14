@@ -24,4 +24,7 @@ export class User {
   @ApiProperty()
   @Column({ nullable: true })
   image: string;
+
+  @Column({ default: false })
+  twoFactor: boolean;
 }

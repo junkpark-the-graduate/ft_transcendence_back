@@ -44,11 +44,17 @@ export class UserService {
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(ftId: number, updateUserDto: UpdateUserDto) {
+    const { name, email, image } = updateUserDto;
+    const user = await this.userRepository.update(ftId, {
+      name: name,
+      email: email,
+      image: image,
+    });
+    return user;
   }
 
-  async remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(ftId: number) {
+    return `This action removes a #${ftId} user`;
   }
 }

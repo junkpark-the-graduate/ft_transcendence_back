@@ -61,13 +61,13 @@ export class UserController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Patch(':id')
+  @Patch()
   @ApiOperation({
     summary: '특정 유저 업데이트 API',
     description: '특정 유저의 정보 업데이트',
   })
-  @ApiResponse({ status: 200, description: 'OK' })
-  update(@Param('id') id: number, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(id, updateUserDto);
+  @ApiResponse({ status: 200, description: 'OK', type: User })
+  update(@Request() req, @Body() updateUserDto: UpdateUserDto) {
+    return this.userService.update(req.user.ftId, updateUserDto);
   }
 }

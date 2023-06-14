@@ -19,6 +19,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       database: 'postgres',
       entities: ['dist/**/*.entity{.js,.ts}'],
       synchronize: true,
+      logging: true,
     }),
     AuthModule,
     UserModule,
