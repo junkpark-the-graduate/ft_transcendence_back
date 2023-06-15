@@ -45,11 +45,10 @@ export class UserService {
   }
 
   async update(ftId: number, updateUserDto: UpdateUserDto) {
-    const { name, email, image } = updateUserDto;
+    const { name, email } = updateUserDto;
     const user = await this.userRepository.update(ftId, {
       name: name,
       email: email,
-      image: image,
     });
     return user;
   }
