@@ -7,7 +7,7 @@ export class UpdateUserDto extends OmitType(CreateUserDto, [
   'ftId',
   'image',
 ] as const) {
-  // @IsNotEmpty()
-  // @ApiProperty()
-  // readonly twoFactor: boolean;
+  @IsNotEmpty()
+  @ApiProperty()
+  readonly twoFactor: boolean;
 }
