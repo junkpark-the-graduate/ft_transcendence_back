@@ -28,7 +28,7 @@ export class EmailService {
     // 이 링크를 통해 우리 서비스로 이메일 인증 요청이 들어옴
     // const baseUrl = 'http://localhost:3001'; // TODO: config
 
-    const url = `${process.env.BACK_END_POINT}/auth/2fa?twoFactorToken=${twoFactorToken}`;
+    const url = `http://localhost:3000/auth/2fa?twoFactorToken=${twoFactorToken}`;
 
     // 메일 본문 구성 form 태그를 이용해 POST 요청 실시
     console.log(process.env.GMAIL_ID, process.env.GMAIL_PW);
@@ -43,17 +43,15 @@ export class EmailService {
       `,
       auth: {
         user: process.env.GMAIL_ID,
-        pass: 'rahjtsafeguwbrbf',
+        pass: process.env.GMAIL_PW,
       },
     };
 
     // transporter 객체를 이용해 메일 전송
     try {
       await this.mailerService.sendMail(mailOptions);
-      console.log('sendMailSuccess');
       return true;
     } catch (error) {
-      console.log('sendMailError', error);
       return false;
     }
     // return await this.mailerService.sendMail(mailOptions);

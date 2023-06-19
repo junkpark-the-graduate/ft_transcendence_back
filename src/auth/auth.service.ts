@@ -48,10 +48,11 @@ export class AuthService {
         user = await this.userService.create({
           ftId: ftId,
           email: email,
-          name: login,
+          name: `#${ftId}`,
           image: image.versions.medium,
         });
       }
+
       if (user.twoFactor) {
         const twoFactorToken = await this.createTwoFactorToken(user.ftId);
         await this.emailService.sendMemberJoinVerification(
