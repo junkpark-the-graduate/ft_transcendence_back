@@ -7,6 +7,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { NestModule, MiddlewareConsumer, Logger } from '@nestjs/common';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { EmailService } from './email/email.service';
 
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
@@ -26,6 +28,22 @@ export class LoggerMiddleware implements NestMiddleware {
 
 @Module({
   imports: [
+    MailerModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          auth: {
+            user: process.env.GMAIL_ID,
+            pass: process.env.GMAIL_PASSWORD,
+          },
+        },
+        defaults: {
+          from: `"nest-modules" <${process.env.GMAIL_ID}>`,
+        },
+      }),
+    }),
     ConfigModule.forRoot({
       envFilePath: '.env',
     }),
@@ -45,7 +63,7 @@ export class LoggerMiddleware implements NestMiddleware {
     UserModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [EmailService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

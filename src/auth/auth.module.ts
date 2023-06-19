@@ -8,6 +8,7 @@ import { FtAuthService } from 'src/ft-auth/ft-auth.service';
 import { User } from '../user/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtStrategy } from './jwt.strategy';
+import { EmailService } from 'src/email/email.service';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { JwtStrategy } from './jwt.strategy';
     FtAuthService,
     JwtStrategy,
     ValidationPipe,
+    EmailService,
   ],
 })
 export class AuthModule {}
