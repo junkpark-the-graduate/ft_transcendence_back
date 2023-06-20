@@ -17,12 +17,6 @@ export class AuthController {
   @ApiCreatedResponse({ description: 'sign in success', type: User })
   async signIn(@Query() authDto: AuthDto) {
     return this.authService.signIn(authDto);
-    // if (ret === 'twoFactor') {
-    // res.redirect('http://localhost:3000/auth/tfa-loading');
-    // return;
-    // } else {
-    // return ret;
-    // }
   }
 
   @Post('/2fa')
