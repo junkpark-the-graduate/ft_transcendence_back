@@ -9,6 +9,7 @@ import { User } from '../user/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtStrategy } from './jwt.strategy';
 import { EmailService } from 'src/email/email.service';
+import { Auth } from './auth.entity';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { EmailService } from 'src/email/email.service';
       secret: process.env.JWT_SECRET, // 실제로는 비밀키를 환경 변수 등에서 가져와야 합니다.
       signOptions: { expiresIn: 60 * 60 },
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Auth]),
   ],
   controllers: [AuthController],
   providers: [

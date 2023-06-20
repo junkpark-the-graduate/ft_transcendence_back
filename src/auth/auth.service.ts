@@ -12,6 +12,9 @@ import { UserService } from 'src/user/user.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { EmailService } from 'src/email/email.service';
 import { constrainedMemory } from 'process';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Auth } from './auth.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +23,8 @@ export class AuthService {
     private ftAuthService: FtAuthService,
     private jwtService: JwtService,
     private emailService: EmailService,
+    @InjectRepository(Auth)
+    private readonly authRepository: Repository<Auth>,
   ) {}
 
   private createAccessToken = async (ftId: number): Promise<string> => {
@@ -44,7 +49,6 @@ export class AuthService {
       let user = await this.userService.findOne(ftId);
 
       if (!user) {
-        // TODO: signup
         user = await this.userService.create({
           ftId: ftId,
           email: email,
@@ -55,16 +59,24 @@ export class AuthService {
 
       if (user.twoFactor) {
         const twoFactorToken = await this.createTwoFactorToken(user.ftId);
+
+        const auth = this.authRepository.create({
+          ftId: user.ftId,
+        });
+        await this.authRepository.save(auth);
+
         await this.emailService.sendMemberJoinVerification(
           user.email,
           twoFactorToken,
         );
-        return 'twoFactor';
+        return { redirect: true };
       } else {
         const accessToken = await this.createAccessToken(user.ftId);
         return { accessToken };
       }
-    } catch (err) {}
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async twoFactorAuth(twoFactorDto: TwoFactorDto): Promise<any> {
