@@ -11,8 +11,9 @@ import { UserService } from 'src/user/user.service';
 import { EmailService } from 'src/email/email.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Tfa } from '../tfa-auth/tfa.entity';
-import { Repository } from 'typeorm';
+import { InsertResult, Repository } from 'typeorm';
 import { User } from 'src/user/user.entity';
+import { uuid } from 'uuidv4';
 
 // TODO any 타입 명확히 하기
 @Injectable()
@@ -41,15 +42,20 @@ export class TfaAuthService {
 
   async signInTwoFactorToken(user: User): Promise<any> {
     const twoFactorToken = await this.createTwoFactorToken(user.ftId);
-
-    const tfa = this.tfaRepository.create({
-      ftId: user.ftId,
-    });
-    await this.tfaRepository.save(tfa);
-
+    InsertResult;
+    const tfa = await this.tfaRepository.upsert(
+      [
+        {
+          ftId: user.ftId,
+          twoFactorCode: uuid(),
+          updatedAt: new Date(),
+        },
+      ],
+      ['ftId'],
+    );
     await this.emailService.sendMemberJoinVerification(
       user.email,
-      tfa.twoFactorCode,
+      tfa.generatedMaps[0].twoFactorCode,
     );
     return { twoFactorToken };
   }
@@ -68,8 +74,8 @@ export class TfaAuthService {
     }
 
     const now = new Date();
-    const createAt = tfa.createdAt;
-    const diff = Math.floor(now.getTime() - createAt.getTime());
+    const updatedAt = tfa.updatedAt;
+    const diff = Math.floor(now.getTime() - updatedAt.getTime());
 
     if (diff > 1000 * 60 * 5) {
       throw new UnauthorizedException('twoFactorCode has expired');
