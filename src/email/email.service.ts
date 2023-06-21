@@ -37,9 +37,7 @@ export class EmailService {
       subject: 'ft_transcendence: 2FA',
       html: `
         인증 버튼을 누르면 인증이 완료됩니다.<br/>
-        <form action="${url}" method="POST">
-          <button>인증하기</button>
-        </form>
+        <a href="${url}">인증하기</a>
       `,
       auth: {
         user: process.env.GMAIL_ID,
