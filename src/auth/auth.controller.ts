@@ -1,7 +1,8 @@
-import { TwoFactorDto } from './dto/twoFactor.dto';
+import { TwoFactorTokenDto, TwoFactorCodeDto } from './dto/twoFactor.dto';
 
 import { Controller, Post, Query, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { TfaAuthService } from 'src/tfa-auth/tfa-auth.service';
 import { AuthDto } from './dto/auth.dto';
 
 import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -10,7 +11,10 @@ import { User } from '../user/user.entity';
 @Controller('auth')
 @ApiTags('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly tfaAuthService: TfaAuthService,
+  ) {}
 
   @Post('/')
   @ApiOperation({ summary: 'sign in with 42 intra' })
@@ -19,11 +23,19 @@ export class AuthController {
     return this.authService.signIn(authDto);
   }
 
-  @Post('/2fa')
+  @Post('/tfa')
   @ApiOperation({ summary: 'signIn with twoFactor' })
   @ApiCreatedResponse({ description: '', type: User })
-  async signInWithTwoFactor(@Query() twoFactorDto: TwoFactorDto) {
-    console.log('twoFactorDto', twoFactorDto);
-    return this.authService.twoFactorAuth(twoFactorDto);
+  async signInWithTwoFactor(@Query() twoFactorTokenDto: TwoFactorTokenDto) {
+    console.log('twoFactorTokenDto', twoFactorTokenDto);
+    return this.tfaAuthService.authTwoFactorToken(twoFactorTokenDto);
+  }
+
+  @Post('/tfa/verification')
+  @ApiOperation({ summary: 'twoFactor verification' })
+  @ApiCreatedResponse({ description: '' })
+  async verifyTwoFactorCode(@Query() twoFactorCodeDto: TwoFactorCodeDto) {
+    console.log('twoFactorCodeDto', twoFactorCodeDto);
+    return this.tfaAuthService.verifyTwoFactorCode(twoFactorCodeDto);
   }
 }

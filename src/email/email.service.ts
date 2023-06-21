@@ -23,12 +23,12 @@ export class EmailService {
 
   async sendMemberJoinVerification(
     emailAddress: string,
-    twoFactorToken: string,
+    twoFactorCode: string,
   ) {
     // 이 링크를 통해 우리 서비스로 이메일 인증 요청이 들어옴
     // const baseUrl = 'http://localhost:3001'; // TODO: config
 
-    const url = `http://localhost:3000/auth/2fa?twoFactorToken=${twoFactorToken}`;
+    const url = `http://localhost:3000/auth/tfa/verification?twoFactorCode=${twoFactorCode}`;
 
     // 메일 본문 구성 form 태그를 이용해 POST 요청 실시
     console.log(process.env.GMAIL_ID, process.env.GMAIL_PW);

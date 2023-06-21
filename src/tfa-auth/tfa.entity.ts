@@ -2,11 +2,11 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Entity, Column, PrimaryColumn, Generated, OneToOne } from 'typeorm';
 
 @Entity()
-export class Auth {
+export class Tfa {
   @ApiProperty()
   @PrimaryColumn({ unique: true, nullable: false })
   @Generated('uuid')
-  twoFactorToken: string;
+  twoFactorCode: string;
 
   @ApiProperty()
   @Column({ default: false })
@@ -15,4 +15,8 @@ export class Auth {
   @ApiProperty()
   @Column({ nullable: false })
   ftId: number;
+
+  @ApiProperty()
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
 }
