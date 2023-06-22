@@ -1,8 +1,8 @@
 import { TwoFactorTokenDto, TwoFactorCodeDto } from './dto/twoFactor.dto';
 
-import { Controller, Post, Query, Res } from '@nestjs/common';
+import { Controller, Post, Query } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { TfaAuthService } from 'src/tfa-auth/tfa-auth.service';
+import { TfaAuthService } from './services/tfa-auth.service';
 import { AuthDto } from './dto/auth.dto';
 
 import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';

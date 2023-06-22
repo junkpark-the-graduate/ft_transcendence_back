@@ -1,21 +1,9 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { AuthDto } from './dto/auth.dto';
-// import { TwoFactorTokenDto } from './dto/twoFactor.dto';
-import axios from 'axios';
-import { FtAuthService } from 'src/ft-auth/ft-auth.service';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
-// import { EmailService } from 'src/email/email.service';
-import { TfaAuthService } from 'src/tfa-auth/tfa-auth.service';
-import { constrainedMemory } from 'process';
-// import { InjectRepository } from '@nestjs/typeorm';
-// import { Tfa } from '../tfa-auth/tfa.entity';
-// import { Repository } from 'typeorm';
+import { AuthDto } from './dto/auth.dto';
+import { TfaAuthService } from './services/tfa-auth.service';
+import { FtAuthService } from './services/ft-auth.service';
 
 @Injectable()
 export class AuthService {
@@ -23,11 +11,8 @@ export class AuthService {
     private userService: UserService,
     private ftAuthService: FtAuthService,
     private jwtService: JwtService,
-    // private emailService: EmailService,
     private tfaAuthService: TfaAuthService,
-  ) // @InjectRepository(Tfa)
-  // private readonly authRepository: Repository<Tfa>,
-  {}
+  ) {}
 
   private createAccessToken = async (ftId: number): Promise<string> => {
     const payload = { sub: ftId };
@@ -58,7 +43,6 @@ export class AuthService {
           image: image.versions.medium,
         });
       }
-
       if (user.twoFactor) {
         return this.tfaAuthService.signInTwoFactorToken(user);
       } else {
