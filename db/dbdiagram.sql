@@ -4,7 +4,7 @@ Table Users {
   email             string
   image             string
   twoFactorEnabled  bool
-  OnlineStatus      string
+  onlineStatus      string
   // Wins              int
   // Losses            int
   // LadderLevel       int
@@ -27,67 +27,64 @@ Table Follow {
 Table BlockedUsers {
   id                int [primary key]
   ftId              int
-  BlockedUserID     int
+  blockedUserId     int
 }
 
 Table MatchHistory {
   id                int [primary key]
   ftId              int
-  OpponentID        int
-  Result            string
-  MatchType         string
-  MatchTime         timestamp
+  opponentId        int
+  result            string
+  matchType         string
+  matchTime         timestamp
 }
 
 Table Channels {
   id                int [primary key]
   ftId              int
-  OwnerID           int
-  Name              string
-  Password          string
-  IsPublic          bool
+  ownerId           int
+  name              string
+  password          string
+  isPublic          bool
 }
 
 Table ChannelMembers {
   id                int [primary key]
   ftId              int
-  UserID            int
-  ChannelID         int
+  userId            int
+  channelId         int
   IsAdmin           bool
 }
 
 Table Messages {
   ftId              int
-  SenderID          int
-  RecipientID       int
-  ChannelID         int
-  Content           string
-  SentTime          timestamp
+  senderId          int
+  recipientId       int
+  channelId         int
+  content           string
+  sentTime          timestamp
 }
 
 Table Games {
   id                int [primary key]
   ftId              int
-  Player1ID         int
-  Player2ID         int
-  GameStatus        string
-  GameType          string
-  GameResult        string
-  StartTime         timestamp
+  player1Id         int
+  player2Id         int
+  gameStatus        string
+  gameType          string
+  gameResult        string
+  startTime         timestamp
 }
 
-Ref: Tfa.ftId              - Users.ftId
-Ref: Follow.follower       - Users.ftId
-Ref: Follow.following      - Users.ftId
-Ref: MatchHistory.ftId     - Users.ftId
-Ref: MatchHistory.OpponentID - Users.ftId
-Ref: Channels.OwnerID      - Users.ftId
-Ref: ChannelMembers.UserID - Users.ftId
-Ref: ChannelMembers.ChannelID - Channels.ftId
-// Ref: Messages.SenderID     - Users.ftId
-// Ref: Messages.RecipientID  - Users.ftId
-// Ref: Messages.ChannelID    - Channels.ftId
-Ref: BlockedUsers.ftId     - Users.ftId
-Ref: BlockedUsers.BlockedUserID - Users.ftId
-Ref: Games.Player1ID       - Users.ftId
-Ref: Games.Player2ID       - Users.ftId
+Ref: Tfa.ftId                   - Users.ftId
+Ref: Follow.follower            - Users.ftId
+Ref: Follow.following           - Users.ftId
+Ref: MatchHistory.ftId          - Users.ftId
+Ref: MatchHistory.opponentId    - Users.ftId
+Ref: Channels.ownerId           - Users.ftId
+Ref: ChannelMembers.userId      - Users.ftId
+Ref: ChannelMembers.channelId   - Channels.ftId
+Ref: BlockedUsers.ftId          - Users.ftId
+Ref: BlockedUsers.blockedUserId - Users.ftId
+Ref: Games.player1Id            - Users.ftId
+Ref: Games.player2Id            - Users.ftId
