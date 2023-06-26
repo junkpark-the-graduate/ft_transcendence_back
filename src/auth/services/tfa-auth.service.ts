@@ -5,8 +5,8 @@ import { uuid } from 'uuidv4';
 import { JwtService } from '@nestjs/jwt';
 import { TwoFactorTokenDto, TwoFactorCodeDto } from '../dto/twoFactor.dto';
 import { EmailService } from './email.service';
-import { Tfa } from '../entity/tfa.entity';
-import { User } from 'src/user/user.entity';
+import { TfaEntity } from '../entity/tfa.entity';
+import { UserEntity } from 'src/user/user.entity';
 
 // TODO any 타입 명확히 하기
 @Injectable()
@@ -14,8 +14,8 @@ export class TfaAuthService {
   constructor(
     private jwtService: JwtService,
     private emailService: EmailService,
-    @InjectRepository(Tfa)
-    private readonly tfaRepository: Repository<Tfa>,
+    @InjectRepository(TfaEntity)
+    private readonly tfaRepository: Repository<TfaEntity>,
   ) {}
 
   private createAccessToken = async (ftId: number): Promise<string> => {
@@ -26,12 +26,15 @@ export class TfaAuthService {
 
   private createTwoFactorToken = async (ftId: number): Promise<string> => {
     const payload = { sub: ftId };
-    const options = { secret: 'twoFactor Secret!', expiresIn: 60 * 5 };
+    const options = {
+      secret: process.env.JWT_TWO_FACTOR_SECRET,
+      expiresIn: '5m',
+    };
     const twoFactorToken = await this.jwtService.signAsync(payload, options);
     return twoFactorToken;
   };
 
-  async signInTwoFactorToken(user: User): Promise<any> {
+  async signInTwoFactorToken(user: UserEntity): Promise<any> {
     const twoFactorToken = await this.createTwoFactorToken(user.ftId);
     InsertResult;
     const tfa = await this.tfaRepository.upsert(
@@ -80,7 +83,7 @@ export class TfaAuthService {
     console.log('check twoFactorToken', twoFactorToken);
     try {
       const decoded = await this.jwtService.verifyAsync(twoFactorToken, {
-        secret: 'twoFactor Secret!',
+        secret: process.env.JWT_TWO_FACTOR_SECRET,
       });
       const ftId = decoded.sub;
       const accessToken = await this.createAccessToken(ftId);

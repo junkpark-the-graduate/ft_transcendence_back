@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class Tfa {
+export class TfaEntity {
   @ApiProperty()
   @PrimaryColumn({ unique: true, nullable: false })
   @Generated('uuid')

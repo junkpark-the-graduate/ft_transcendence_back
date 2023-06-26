@@ -2,26 +2,25 @@ import { ConfigService } from '@nestjs/config';
 import { Module, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { User } from '../user/user.entity';
+import { UserEntity } from '../user/user.entity';
 import { UserModule } from 'src/user/user.module';
-import { UserService } from 'src/user/user.service';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { EmailService } from './services/email.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { FtAuthService } from './services/ft-auth.service';
-import { Tfa } from './entity/tfa.entity';
+import { TfaEntity } from './entity/tfa.entity';
 import { TfaAuthService } from './services/tfa-auth.service';
 
 @Module({
   imports: [
     UserModule,
-    TypeOrmModule.forFeature([User, Tfa]),
+    TypeOrmModule.forFeature([UserEntity, TfaEntity]),
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET, // 실제로는 비밀키를 환경 변수 등에서 가져와야 합니다.
-      signOptions: { expiresIn: 60 * 60 },
+      signOptions: { expiresIn: '1h' },
     }),
     MailerModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
@@ -43,7 +42,6 @@ import { TfaAuthService } from './services/tfa-auth.service';
   controllers: [AuthController],
   providers: [
     AuthService,
-    UserService,
     FtAuthService,
     JwtStrategy,
     ValidationPipe,

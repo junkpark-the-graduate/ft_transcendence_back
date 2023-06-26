@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class User {
+export class UserEntity {
   @PrimaryColumn({ unique: true, nullable: false })
   @ApiProperty()
   ftId: number;

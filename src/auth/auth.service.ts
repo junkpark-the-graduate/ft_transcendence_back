@@ -22,7 +22,10 @@ export class AuthService {
 
   private createTwoFactorToken = async (ftId: number): Promise<string> => {
     const payload = { sub: ftId };
-    const options = { secret: 'twoFactor Secret!', expiresIn: 60 * 5 };
+    const options = {
+      secret: process.env.JWT_TWO_FACTOR_SECRET,
+      expiresIn: '5m',
+    };
     const twoFactorToken = await this.jwtService.signAsync(payload, options);
     return twoFactorToken;
   };

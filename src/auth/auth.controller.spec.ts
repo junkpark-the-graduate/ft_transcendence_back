@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Tfa } from './entity/tfa.entity';
-import { User } from '../user/user.entity';
+import { UserEntity } from '../user/user.entity';
 import { EmailService } from './services/email.service';
 
 jest.mock('axios');

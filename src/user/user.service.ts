@@ -2,14 +2,14 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
-import { User } from './user.entity';
+import { UserEntity } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -47,11 +47,17 @@ export class UserService {
   async update(ftId: number, updateUserDto: UpdateUserDto) {
     const { name, twoFactor } = updateUserDto;
 
-    const user = await this.userRepository.update(ftId, {
-      name: name,
-      twoFactor: twoFactor,
+    let user = await this.userRepository.findOne({
+      where: {
+        ftId: ftId,
+      },
     });
-    console.log('updateUserDto: ', updateUserDto);
+
+    user.name = name;
+    user.twoFactor = twoFactor;
+
+    user = await this.userRepository.save(user);
+
     return user;
   }
 
