@@ -1,73 +1,26 @@
 Table Users {
-  ftId              int [primary key]
+  id                int [primary key]
   name              string
   email             string
   image             string
   twoFactorEnabled  bool
   onlineStatus      string
-  // Wins              int
-  // Losses            int
-  // LadderLevel       int
-  // Achievements      string
+  ELOscore          int
 }
-
+//--------------------------------------
 Table Tfa {
-  ftId              int [primary key]
+  userId            int [primary key]
   twoFactorCode     string
   isValidated       boolean
 }
-
-Table Follow {
-  id                int [primary key]
-  ftId              int
-  follower          int
-  following         int
-}
-
-Table BlockedUsers {
-  id                int [primary key]
-  ftId              int
-  blockedUserId     int
-}
-
-Table MatchHistory {
-  id                int [primary key]
-  ftId              int
-  opponentId        int
-  result            string
-  matchType         string
-  matchTime         timestamp
-}
-
-Table Channels {
-  id                int [primary key]
-  ftId              int
-  ownerId           int
-  name              string
-  password          string
-  isPublic          bool
-}
-
-Table ChannelMembers {
-  id                int [primary key]
-  ftId              int
-  userId            int
-  channelId         int
-  IsAdmin           bool
-}
-
-Table Messages {
-  ftId              int
-  senderId          int
-  recipientId       int
-  channelId         int
-  content           string
-  sentTime          timestamp
+//--------------------------------------
+Table GameRecords {
+  userId  int 
+  gameId  int   
 }
 
 Table Games {
   id                int [primary key]
-  ftId              int
   player1Id         int
   player2Id         int
   gameStatus        string
@@ -75,16 +28,82 @@ Table Games {
   gameResult        string
   startTime         timestamp
 }
+//--------------------------------------
+Table Follows {
+  userId            int
+  following         int
+  indexes {
+    (userId, following) [pk]
+  }
+}
 
-Ref: Tfa.ftId                   - Users.ftId
-Ref: Follow.follower            - Users.ftId
-Ref: Follow.following           - Users.ftId
-Ref: MatchHistory.ftId          - Users.ftId
-Ref: MatchHistory.opponentId    - Users.ftId
-Ref: Channels.ownerId           - Users.ftId
-Ref: ChannelMembers.userId      - Users.ftId
-Ref: ChannelMembers.channelId   - Channels.ftId
-Ref: BlockedUsers.ftId          - Users.ftId
-Ref: BlockedUsers.blockedUserId - Users.ftId
-Ref: Games.player1Id            - Users.ftId
-Ref: Games.player2Id            - Users.ftId
+Table Blocks {
+  userId            int
+  blocking          int
+  indexes {
+    (userId, blocking) [pk]
+  }
+}
+//--------------------------------------
+enum channelType {
+  direct
+  private
+  protected
+  public
+}
+
+Table Channels {
+  id                int [primary key]
+  ownerId           int
+  name              string
+  password          string
+  type              channelType
+}
+
+Table Messages {
+  userId            int  // == sender
+  channelId         int
+  content           string
+}
+
+Table ChannelMembers {
+  channelId         int
+  userId            int
+  isAdmin           bool
+}
+
+Table ChannelMutedMembers {
+  channelId         int
+  userId            int
+  isMuted           bool  // 제한된 시간동안 채팅이 불가능한 거
+}
+
+Table ChannelBlockedMembers {
+  channelId         int
+  userId            int
+  isBlocked         bool  // 쫓겨나고 다시 들어오지도 못하는 거
+}
+//--------------------------------------
+
+Ref: Tfa.userId                       - Users.id
+
+Ref: Follows.userId                   > Users.id
+Ref: Follows.following                > Users.id
+Ref: Blocks.userId                    > Users.id
+Ref: Blocks.blocking                  > Users.id
+
+Ref: Channels.ownerId                 > Users.id
+Ref: ChannelMembers.userId            > Users.id
+Ref: ChannelMutedMembers.userId       > Users.id
+Ref: ChannelBlockedMembers.userId     > Users.id
+Ref: ChannelMembers.channelId         > Channels.id
+Ref: ChannelMutedMembers.channelId    > Channels.id
+Ref: ChannelBlockedMembers.channelId  > Channels.id
+
+Ref: Messages.userId                  > Users.id
+Ref: Messages.channelId               > Channels.id
+
+Ref: GameRecords.userId               > Users.id
+Ref: GameRecords.gameId               > Games.id
+
+
