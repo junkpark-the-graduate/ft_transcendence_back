@@ -21,7 +21,7 @@ export class TfaEntity {
 
   @ApiProperty()
   @Column({ nullable: false, unique: true })
-  ftId: number;
+  id: number;
 
   @ApiProperty()
   @CreateDateColumn()

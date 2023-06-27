@@ -57,7 +57,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'OK', type: UserEntity })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   findOne(@Request() req) {
-    return this.userService.findOne(req.user.ftId);
+    return this.userService.findOne(req.user.id);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -68,6 +68,6 @@ export class UserController {
   })
   @ApiResponse({ status: 200, description: 'OK', type: UserEntity })
   update(@Request() req, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(req.user.ftId, updateUserDto);
+    return this.userService.update(req.user.id, updateUserDto);
   }
 }

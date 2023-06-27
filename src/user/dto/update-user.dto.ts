@@ -4,11 +4,11 @@ import { ApiProperty, OmitType } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
 
 export class UpdateUserDto extends OmitType(CreateUserDto, [
-  'ftId',
+  'id',
   'image',
   'email',
 ] as const) {
   @IsNotEmpty()
   @ApiProperty()
-  readonly twoFactor: boolean;
+  readonly twoFactorEnabled: boolean;
 }

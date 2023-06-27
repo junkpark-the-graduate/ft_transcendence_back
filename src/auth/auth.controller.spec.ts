@@ -14,7 +14,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Tfa } from './entity/tfa.entity';
+import { TfaEntity } from './entity/tfa.entity';
 import { UserEntity } from '../user/user.entity';
 import { EmailService } from './services/email.service';
 
@@ -43,7 +43,7 @@ describe('AuthController', () => {
           useValue: { sendMemberJoinVerification: jest.fn() },
         },
         {
-          provide: getRepositoryToken(Tfa),
+          provide: getRepositoryToken(TfaEntity),
           useValue: {
             upsert: jest.fn(),
             findOne: jest.fn(),

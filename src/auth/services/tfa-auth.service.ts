@@ -18,14 +18,14 @@ export class TfaAuthService {
     private readonly tfaRepository: Repository<TfaEntity>,
   ) {}
 
-  private createAccessToken = async (ftId: number): Promise<string> => {
-    const payload = { sub: ftId };
+  private createAccessToken = async (id: number): Promise<string> => {
+    const payload = { sub: id };
     const accessToken = await this.jwtService.signAsync(payload);
     return accessToken;
   };
 
-  private createTwoFactorToken = async (ftId: number): Promise<string> => {
-    const payload = { sub: ftId };
+  private createTwoFactorToken = async (id: number): Promise<string> => {
+    const payload = { sub: id };
     const options = {
       secret: process.env.JWT_TWO_FACTOR_SECRET,
       expiresIn: '5m',
@@ -35,17 +35,17 @@ export class TfaAuthService {
   };
 
   async signInTwoFactorToken(user: UserEntity): Promise<any> {
-    const twoFactorToken = await this.createTwoFactorToken(user.ftId);
+    const twoFactorToken = await this.createTwoFactorToken(user.id);
     InsertResult;
     const tfa = await this.tfaRepository.upsert(
       [
         {
-          ftId: user.ftId,
+          id: user.id,
           twoFactorCode: uuid(),
           updatedAt: new Date(),
         },
       ],
-      ['ftId'],
+      ['id'],
     );
     await this.emailService.sendMemberJoinVerification(
       user.email,
@@ -85,18 +85,18 @@ export class TfaAuthService {
       const decoded = await this.jwtService.verifyAsync(twoFactorToken, {
         secret: process.env.JWT_TWO_FACTOR_SECRET,
       });
-      const ftId = decoded.sub;
-      const accessToken = await this.createAccessToken(ftId);
+      const id = decoded.sub;
+      const accessToken = await this.createAccessToken(id);
       const tfa = await this.tfaRepository.findOne({
         where: {
-          ftId: ftId,
+          id: id,
         },
       });
 
       if (!tfa.isValidated) {
         throw new UnauthorizedException('twoFactor is not validate');
       }
-      await this.tfaRepository.delete({ ftId: ftId });
+      await this.tfaRepository.delete({ id: id });
       return { accessToken };
     } catch (err) {
       throw new UnauthorizedException('Invalid twoFactorToken');

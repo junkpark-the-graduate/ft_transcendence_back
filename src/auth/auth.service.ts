@@ -14,14 +14,14 @@ export class AuthService {
     private tfaAuthService: TfaAuthService,
   ) {}
 
-  private createAccessToken = async (ftId: number): Promise<string> => {
-    const payload = { sub: ftId };
+  private createAccessToken = async (id: number): Promise<string> => {
+    const payload = { sub: id };
     const accessToken = await this.jwtService.signAsync(payload);
     return accessToken;
   };
 
-  private createTwoFactorToken = async (ftId: number): Promise<string> => {
-    const payload = { sub: ftId };
+  private createTwoFactorToken = async (id: number): Promise<string> => {
+    const payload = { sub: id };
     const options = {
       secret: process.env.JWT_TWO_FACTOR_SECRET,
       expiresIn: '5m',
@@ -34,22 +34,23 @@ export class AuthService {
   async signIn(authDto: AuthDto): Promise<any> {
     try {
       const ftAccessToken = await this.ftAuthService.getAccessToken(authDto);
-      const { ftId, email, login, image } =
-        await this.ftAuthService.getUserInfo(ftAccessToken);
-      let user = await this.userService.findOne(ftId);
+      const { id, email, login, image } = await this.ftAuthService.getUserInfo(
+        ftAccessToken,
+      );
+      let user = await this.userService.findOne(id);
 
       if (!user) {
         user = await this.userService.create({
-          ftId: ftId,
+          id: id,
           email: email,
-          name: `#${ftId}`,
+          name: `#${id}`,
           image: image.versions.medium,
         });
       }
-      if (user.twoFactor) {
+      if (user.twoFactorEnabled) {
         return this.tfaAuthService.signInTwoFactorToken(user);
       } else {
-        const accessToken = await this.createAccessToken(user.ftId);
+        const accessToken = await this.createAccessToken(user.id);
         return { accessToken };
       }
     } catch (err) {

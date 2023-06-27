@@ -28,7 +28,7 @@ export class FtAuthService {
       const { id, email, login, image } = res.data;
 
       return {
-        ftId: id,
+        id: id,
         email,
         login,
         image,

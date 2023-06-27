@@ -13,11 +13,11 @@ export class UserService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
-    const { ftId, email, name, image } = createUserDto;
+    const { id, email, name, image } = createUserDto;
 
     try {
       const user = this.userRepository.create({
-        ftId,
+        id,
         email,
         name,
         image,
@@ -35,33 +35,33 @@ export class UserService {
     return `This action returns all user`;
   }
 
-  async findOne(ftId: number) {
+  async findOne(id: number) {
     const user = await this.userRepository.findOne({
       where: {
-        ftId: ftId,
+        id: id,
       },
     });
     return user;
   }
 
-  async update(ftId: number, updateUserDto: UpdateUserDto) {
-    const { name, twoFactor } = updateUserDto;
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const { name, twoFactorEnabled } = updateUserDto;
 
     let user = await this.userRepository.findOne({
       where: {
-        ftId: ftId,
+        id: id,
       },
     });
 
     user.name = name;
-    user.twoFactor = twoFactor;
+    user.twoFactorEnabled = twoFactorEnabled;
 
     user = await this.userRepository.save(user);
 
     return user;
   }
 
-  async remove(ftId: number) {
-    return `This action removes a #${ftId} user`;
+  async remove(id: number) {
+    return `This action removes a #${id} user`;
   }
 }

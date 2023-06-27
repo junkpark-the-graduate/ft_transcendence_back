@@ -4,19 +4,26 @@ Table Users {
   email             string
   image             string
   twoFactorEnabled  bool
-  onlineStatus      string
-  ELOscore          int
+  status            EUserStatus
+  mmr               int
 }
-//--------------------------------------
+
+enum EUserStatus {
+  offline
+  online
+  gaming
+}
+
+--------------------------------------
 Table Tfa {
   userId            int [primary key]
   twoFactorCode     string
   isValidated       boolean
 }
-//--------------------------------------
+--------------------------------------
 Table GameRecords {
-  userId  int 
-  gameId  int   
+  userId  int
+  gameId  int
 }
 
 Table Games {
@@ -28,7 +35,7 @@ Table Games {
   gameResult        string
   startTime         timestamp
 }
-//--------------------------------------
+--------------------------------------
 Table Follows {
   userId            int
   following         int
@@ -44,8 +51,8 @@ Table Blocks {
     (userId, blocking) [pk]
   }
 }
-//--------------------------------------
-enum channelType {
+--------------------------------------
+enum EChannelType {
   direct
   private
   protected
@@ -57,11 +64,11 @@ Table Channels {
   ownerId           int
   name              string
   password          string
-  type              channelType
+  type              EChannelType
 }
 
 Table Messages {
-  userId            int  // == sender
+  userId            int  -- sender
   channelId         int
   content           string
 }
@@ -75,15 +82,15 @@ Table ChannelMembers {
 Table ChannelMutedMembers {
   channelId         int
   userId            int
-  isMuted           bool  // 제한된 시간동안 채팅이 불가능한 거
+  isMuted           bool  -- 제한된 시간동안 채팅이 불가능한 거
 }
 
 Table ChannelBlockedMembers {
   channelId         int
   userId            int
-  isBlocked         bool  // 쫓겨나고 다시 들어오지도 못하는 거
+  isBlocked         bool  -- 쫓겨나고 다시 들어오지도 못하는 거
 }
-//--------------------------------------
+--------------------------------------
 
 Ref: Tfa.userId                       - Users.id
 

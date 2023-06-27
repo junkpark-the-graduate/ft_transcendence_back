@@ -7,7 +7,7 @@ export class CreateUserDto {
   @ApiProperty({
     type: Number,
   })
-  readonly ftId: number;
+  readonly id: number;
 
   @IsNotEmpty()
   @IsString()

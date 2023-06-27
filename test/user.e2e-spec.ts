@@ -38,7 +38,7 @@ describe('userController (e2e)', () => {
       .post('/user')
       .set('Authorization', `Bearer ${accessToken}`)
       .send({
-        ftId: 1,
+        id: 1,
         name: 'user1',
         email: 'test@example.com',
         image: 'https://example.com/image.jpg',
@@ -46,7 +46,7 @@ describe('userController (e2e)', () => {
 
     expect(res.status).toBe(201);
     expect(res.body).toEqual({
-      ftId: 1,
+      id: 1,
       name: 'user1',
       email: 'test@example.com',
       image: 'https://example.com/image.jpg',
@@ -61,7 +61,7 @@ describe('userController (e2e)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
-      ftId: 1,
+      id: 1,
       name: 'user1',
       email: 'test@example.com',
       image: 'https://example.com/image.jpg',
@@ -82,7 +82,7 @@ describe('userController (e2e)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
-      ftId: 1,
+      id: 1,
       name: 'user1_updated',
       email: 'test@example.com',
       image: 'https://example.com/image.jpg',
