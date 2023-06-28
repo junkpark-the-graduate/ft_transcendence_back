@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { LoggerMiddleware } from './middleware/logger.middleware';
+import { ChatsModule } from './chats/chats.module';
 
 const typeOrmModuleOptions = {
   type: process.env.DB_TYPE,
@@ -28,6 +29,7 @@ const typeOrmModuleOptions = {
     TypeOrmModule.forRoot(typeOrmModuleOptions),
     AuthModule,
     UserModule,
+    ChatsModule,
   ],
   controllers: [],
   providers: [],
