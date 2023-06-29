@@ -32,6 +32,8 @@ const typeOrmModuleOptions = {
     TypeOrmModule.forRoot(typeOrmModuleOptions),
     AuthModule,
     UserModule,
+    DummyModule,
+    ChatsModule,
   ],
   controllers: [],
   providers: [],
