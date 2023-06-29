@@ -1,11 +1,9 @@
-// import { SocketSchema, Socket as SocketModel } from './models/sockets.model';
-// import { Chatting, ChattingSchema } from './models/chattings.model';
-// import { MongooseModule } from '@nestjs/mongoose';
 import { Module } from '@nestjs/common';
 import { ChatsGateway } from './chats.gateway';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
-  imports: [],
+  imports: [UserModule],
   providers: [ChatsGateway],
 })
 export class ChatsModule {}

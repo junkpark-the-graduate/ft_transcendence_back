@@ -12,15 +12,15 @@ export class WsJwtGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const client: Socket = context.switchToWs().getClient();
+    const socket: Socket = context.switchToWs().getClient();
 
-    const token = client.handshake.query.token as string;
+    const token = socket.handshake.query.token as string;
     if (!token) {
       throw new UnauthorizedException('Token not found.');
     }
     try {
       const payload = await this.jwtService.verifyAsync(token);
-      client.data = { user: payload }; // Save user data in socket object for future use
+      socket.data = { userId: payload.sub }; // Save user data in socket object for future use
 
       return true;
     } catch (err) {
