@@ -10,6 +10,12 @@ import {
   WebSocketGateway,
 } from '@nestjs/websockets';
 
+interface Chat {
+  username: string;
+  message: string;
+  socketId: string;
+}
+
 // @WebSocketGateway(4242, { namespace: 'chattings' })
 @WebSocketGateway(4242, {
   namespace: 'chattings',
@@ -36,26 +42,27 @@ export class ChatsGateway
     this.logger.log(`connected : ${socket.id} ${socket.nsp.name}`);
   }
 
-  @SubscribeMessage('new_user')
-  handleNewUser(
-    @MessageBody() username: string,
-    @ConnectedSocket() socket: Socket,
-  ) {
-    // username db에 적재
-    console.log('new_user!!!!!!!!!', username);
-    socket.broadcast.emit('user_connected', username);
-    return username;
-  }
+  // @SubscribeMessage('new_user')
+  // handleNewUser(
+  //   @MessageBody() username: string,
+  //   @ConnectedSocket() socket: Socket,
+  // ) {
+  //   // username db에 적재
+  //   console.log('new_user!!!!!!!!!', username);
+  //   socket.broadcast.emit('user_connected', username);
+  //   return username;
+  // }
 
   @SubscribeMessage('submit_chat')
   handleSubmitChat(
-    @MessageBody() chat: string,
+    @MessageBody() chat: Chat,
     @ConnectedSocket() socket: Socket,
   ) {
     console.log('submit_chat!!!!!!!!!', chat);
     socket.broadcast.emit('new_chat', {
-      chat,
-      username: socket.id,
+      username: chat.username,
+      message: chat.message,
+      socketId: socket.id,
     });
   }
 }
