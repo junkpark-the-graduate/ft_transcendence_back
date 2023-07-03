@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { ChannelService } from './channel.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
@@ -19,16 +20,23 @@ import { ChannelEntity } from './entities/channel.entity';
 export class ChannelController {
   constructor(private readonly channelService: ChannelService) {}
 
-  // @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'))
   @Post()
   @ApiOperation({ summary: '채널 생성 API', description: '채널을 생성' })
   @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
   @ApiResponse({ status: 200, description: 'OK' })
-  create(@Body() createChannelDto: CreateChannelDto) {
-    return this.channelService.create(createChannelDto);
+  create(@Request() req, @Body() createChannelDto: CreateChannelDto) {
+    console.log('!!!!!!!!!!!!!!11');
+    console.log('req.user.id', req.user.id);
+    console.log('createChannelDto', createChannelDto);
+    return this.channelService.create(createChannelDto, req.user.id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get()
+  @ApiOperation({ summary: '채널 조회 API', description: '모든 채널 조히' })
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  @ApiResponse({ status: 200, description: 'OK' })
   findAll() {
     return this.channelService.findAll();
   }

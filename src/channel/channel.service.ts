@@ -12,9 +12,16 @@ export class ChannelService {
     private readonly channelRepository: Repository<ChannelEntity>,
   ) {}
 
-  async create(createChannelDto: CreateChannelDto) {
+  async create(createChannelDto: CreateChannelDto, ownerId: number) {
     try {
-      const channel = this.channelRepository.create(createChannelDto);
+      const { name, password, type } = createChannelDto;
+      console.log('createChannelDto', createChannelDto);
+      const channel = this.channelRepository.create({
+        ownerId,
+        name,
+        password,
+        type,
+      });
       await this.channelRepository.save(channel);
       return channel;
     } catch (error) {
@@ -22,8 +29,13 @@ export class ChannelService {
     }
   }
 
-  findAll() {
-    return `This action returns all channel`;
+  async findAll() {
+    try {
+      const channels = await this.channelRepository.find();
+      return channels;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
   findOne(id: number) {
