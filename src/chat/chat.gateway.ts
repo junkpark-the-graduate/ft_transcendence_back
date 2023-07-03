@@ -32,7 +32,7 @@ interface User {
     credentials: true,
   },
 })
-export class ChatsGateway
+export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private logger = new Logger('chat');
