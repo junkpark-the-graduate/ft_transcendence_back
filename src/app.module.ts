@@ -5,10 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { LoggerMiddleware } from './middleware/logger.middleware';
-<<<<<<< HEAD
 import { DummyModule } from './dummy/dummy.module';
-=======
->>>>>>> ec056a6 (feat: updating image (Multer, ServeStaticMocule))
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 
@@ -34,10 +31,7 @@ const typeOrmModuleOptions = {
     TypeOrmModule.forRoot(typeOrmModuleOptions),
     AuthModule,
     UserModule,
-<<<<<<< HEAD
     DummyModule,
-=======
->>>>>>> ec056a6 (feat: updating image (Multer, ServeStaticMocule))
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'dist', 'public'),
     }),
