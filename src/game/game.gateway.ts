@@ -9,6 +9,7 @@ import {
   WebSocketGateway,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
+import { GameEngine } from './game.engine';
 
 @WebSocketGateway(4242, {
   namespace: 'game',
@@ -22,7 +23,7 @@ export class GameGateway
 {
   private logger = new Logger('GameGateway');
 
-  constructor() {
+  constructor(private gameEngine: GameEngine) {
     this.logger.log('GameGateway constructor');
   }
 
@@ -32,17 +33,56 @@ export class GameGateway
 
   handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`Client connected: ${socket.id}`);
+
+    socket['paddle1'] = {
+      position: {
+        x: 0,
+        y: -30,
+      },
+    };
+    socket['paddle2'] = {
+      position: {
+        x: 0,
+        y: 30,
+      },
+    };
+    socket['ball'] = {
+      position: {
+        x: 0,
+        y: 0,
+      },
+      dir: {
+        x: 1,
+        y: 1,
+      },
+      speed: 1,
+    };
+
+    const interval = setInterval(() => {
+      //socket.emit('game', 'Game event');
+
+      socket.emit('game', this.gameEngine.gameUpdate(socket));
+    }, 1000 / 60);
+
+    socket['interval'] = interval;
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
+    const interval = socket['interval'];
     this.logger.log(`Client disconnected: ${socket.id}`);
+
+    clearInterval(interval);
   }
 
-  @SubscribeMessage('hello')
+  @SubscribeMessage('key_left')
   handleHello(@ConnectedSocket() socket: Socket, @MessageBody() data) {
-    console.log(data);
+    socket['paddle1'].position.x -= 0.5;
+    //console.log('key_left');
+  }
 
-    this.logger.log(`Client ${socket.id} says hello`);
-    socket.emit('hello', `Hello ${socket.id}`);
+  @SubscribeMessage('key_right')
+  handleKeyRight(@ConnectedSocket() socket: Socket, @MessageBody() data) {
+    socket['paddle1'].position.x += 0.5;
+    //console.log('key_right');
   }
 }
