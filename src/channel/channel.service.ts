@@ -2,6 +2,8 @@ import {
   Injectable,
   InternalServerErrorException,
   ConflictException,
+  UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
@@ -12,6 +14,7 @@ import { ChannelEntity } from './entities/channel.entity';
 import { ChannelMemberEntity } from './entities/channel-member.entity';
 import { ChannelMutedMemberEntity } from './entities/channel-muted-member.entity';
 import { ChannelBlockedMemberEntity } from './entities/channel-blocked-member.entity';
+import { CreateChannelMutedMemberDto } from './dto/create-channel-muted-member';
 
 @Injectable()
 export class ChannelService {
@@ -46,6 +49,17 @@ export class ChannelService {
         type,
       });
       await this.channelRepository.save(channel);
+
+      const createChannelMemberDto: CreateChannelMemberDto = {
+        channelId: channel.id,
+        userId: ownerId,
+        isAdmin: true,
+      };
+      const channelMember = this.channelMemberRepository.create(
+        createChannelMemberDto,
+      );
+      await this.channelMemberRepository.save(channelMember);
+
       return channel;
     } catch (error) {
       if (error.status) throw error;
@@ -85,7 +99,7 @@ export class ChannelService {
         },
       });
 
-      if (!channel) throw new ConflictException('존재하지 않는 채널입니다.');
+      if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
       // Todo: 비밀번호 체크
       // if (channel.password !== createChannelMemberDto.password)
       //   throw new ConflictException('비밀번호가 틀렸습니다.');
@@ -104,6 +118,53 @@ export class ChannelService {
 
       return channel;
     } catch (error) {
+      if (error.status) throw error;
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async mute(
+    createChannelMutedMemberDto: CreateChannelMutedMemberDto,
+    userId: number,
+  ) {
+    try {
+      const channel = await this.channelRepository.findOne({
+        where: {
+          id: createChannelMutedMemberDto.channelId,
+        },
+        relations: {
+          channelMembers: true,
+          channelMutedMembers: true,
+        },
+      });
+      if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
+
+      const admin = channel.channelMembers.find(
+        (member) => member.userId === userId,
+      );
+      if (!admin) throw new NotFoundException('채널 멤버가 아닙니다.');
+      if (!admin.isAdmin)
+        throw new UnauthorizedException('채널 관리자가 아닙니다');
+
+      const channelMember = channel.channelMembers.find(
+        (member) => member.userId === createChannelMutedMemberDto.userId,
+      );
+      if (!channelMember) throw new NotFoundException('채널 멤버가 아닙니다.');
+
+      let mutedMember = channel.channelMutedMembers.find(
+        (member) => member.userId === createChannelMutedMemberDto.userId,
+      );
+
+      if (mutedMember) return mutedMember;
+
+      mutedMember = this.channelMutedMemberRepository.create(
+        createChannelMutedMemberDto,
+      );
+      await this.channelMutedMemberRepository.save(mutedMember);
+
+      return mutedMember;
+    } catch (error) {
+      console.log(error);
       if (error.status) throw error;
       throw new InternalServerErrorException(error.message);
     }

@@ -8,11 +8,13 @@ import {
   Delete,
   UseGuards,
   Request,
+  Query,
 } from '@nestjs/common';
 import { ChannelService } from './channel.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { CreateChannelMemberDto } from './dto/create-channel-member.dto';
+import { CreateChannelMutedMemberDto } from './dto/create-channel-muted-member';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiCreatedResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ChannelEntity } from './entities/channel.entity';
@@ -68,5 +70,22 @@ export class ChannelController {
       isAdmin: false,
     };
     return this.channelService.join(createChannelMemberDto);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':channelId/muted-member')
+  @ApiOperation({ summary: '멤버 뮤트', description: 'time만큼 뮤트' })
+  @ApiResponse({ status: 200, description: 'OK' })
+  mute(
+    @Request() req,
+    @Param('channelId') channelId: number,
+    @Query('memberId') memberId: number,
+  ) {
+    const userId = req.user.id;
+    const createChannelMutedMemberDto: CreateChannelMutedMemberDto = {
+      channelId,
+      userId: memberId,
+    };
+    return this.channelService.mute(createChannelMutedMemberDto, userId);
   }
 }
