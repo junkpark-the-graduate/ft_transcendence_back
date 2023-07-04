@@ -7,20 +7,36 @@ import {
   OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { GameEngine } from './game.engine';
+import {
+  PADDLE_WIDTH,
+  PADDLE_HEIGHT,
+  PADDLE_SPEED,
+  BALL_SIZE,
+  BALL_SPEED,
+  PLANE_WIDTH,
+  PLANE_HEIGHT,
+} from './game.constants';
 
 @WebSocketGateway(4242, {
   namespace: 'game',
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: [
+      'http://127.0.0.1:3000',
+      'http://localhost:3000',
+      'http://127.0.0.1:3001',
+      'http://localhost:3001',
+    ],
     credentials: true,
   },
 })
 export class GameGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
+  @WebSocketServer() io: Server;
   private logger = new Logger('GameGateway');
 
   constructor(private gameEngine: GameEngine) {
@@ -31,58 +47,55 @@ export class GameGateway
     this.logger.log('GameGateway initialized');
   }
 
-  handleConnection(@ConnectedSocket() socket: Socket) {
+  async handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`Client connected: ${socket.id}`);
 
-    socket['paddle1'] = {
-      position: {
-        x: 0,
-        y: -30,
-      },
-    };
-    socket['paddle2'] = {
-      position: {
-        x: 0,
-        y: 30,
-      },
-    };
-    socket['ball'] = {
-      position: {
-        x: 0,
-        y: 0,
-      },
-      dir: {
-        x: 1,
-        y: 1,
-      },
-      speed: 1,
-    };
+    socket.join('dummy_room');
+    console.log('socket.rooms: ', socket.rooms);
 
-    const interval = setInterval(() => {
-      //socket.emit('game', 'Game event');
+    // check two player
+    const clientsInRoom = await this.io.in('dummy_room').fetchSockets();
+    //console.log(clientsInRoom);
+    if (clientsInRoom.length === 2) {
+      const player1 = clientsInRoom[0];
+      const player2 = clientsInRoom[1];
 
-      socket.emit('game', this.gameEngine.gameUpdate(socket));
-    }, 1000 / 60);
+      const room = this.io.in('dummy_room');
+      this.io.in('dummy_room').emit('game_test', 'Game start');
+      this.gameEngine.gameInit(player1, player2, room);
+      console.log('room["test"]: ', room['test']);
+      this.gameEngine.gameLoop(player1, player2, room);
 
-    socket['interval'] = interval;
+      console.log('player1: ', player1['paddle1']);
+      // this.gameEngine.gameLoop(socket);
+    } else {
+      socket.emit('game_test', 'Waiting for another player');
+    }
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
-    const interval = socket['interval'];
     this.logger.log(`Client disconnected: ${socket.id}`);
+    // TODO interval 삭제
+    //const interval = socket['interval'];
+    //const interval = this.io.in('dummy_room')['interval'];
 
-    clearInterval(interval);
+    socket.leave('dummy_room');
+    //clearInterval(interval);
   }
 
   @SubscribeMessage('key_left')
-  handleHello(@ConnectedSocket() socket: Socket, @MessageBody() data) {
-    socket['paddle1'].position.x -= 0.5;
-    //console.log('key_left');
+  handleHello(
+    @ConnectedSocket() socket: Socket,
+    //@MessageBody('isPlayer1') isPlayer1: boolean,
+  ) {
+    this.gameEngine.movePaddleLeft(socket);
   }
 
   @SubscribeMessage('key_right')
-  handleKeyRight(@ConnectedSocket() socket: Socket, @MessageBody() data) {
-    socket['paddle1'].position.x += 0.5;
-    //console.log('key_right');
+  handleKeyRight(
+    @ConnectedSocket() socket: Socket,
+    //@MessageBody('isPlayer1') isPlayer1,
+  ) {
+    this.gameEngine.movePaddleRight(socket);
   }
 }
