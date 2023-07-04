@@ -2,16 +2,17 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   Entity,
   Column,
-  PrimaryColumn,
   PrimaryGeneratedColumn,
-  Unique,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { ChannelEntity } from './channel.entity';
 
 @Entity()
 export class ChannelBlockedMemberEntity {
-  @PrimaryColumn({ unique: true, nullable: false })
+  @PrimaryGeneratedColumn()
   @ApiProperty()
   id: number;
 
@@ -34,4 +35,8 @@ export class ChannelBlockedMemberEntity {
   @ApiProperty()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToOne(() => ChannelEntity, (channel) => channel.channelBlockedMembers)
+  @JoinColumn({ name: 'channelId' })
+  channel: ChannelEntity;
 }

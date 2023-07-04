@@ -3,11 +3,6 @@ import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { EChannelType } from '../entities/channel.entity';
 
 export class CreateChannelDto {
-  // @IsNotEmpty()
-  // @IsNumber()
-  // @ApiProperty()
-  // readonly ownerId: number;
-
   @IsNotEmpty()
   @IsString()
   @ApiProperty()

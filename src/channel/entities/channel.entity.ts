@@ -2,12 +2,14 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   Entity,
   Column,
-  PrimaryColumn,
   PrimaryGeneratedColumn,
-  Unique,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { ChannelMemberEntity } from './channel-member.entity';
+import { ChannelBlockedMemberEntity } from './channel-blocked-member.entity';
+import { ChannelMutedMemberEntity } from './channel-muted-member.entity';
 
 export enum EChannelType {
   direct,
@@ -49,4 +51,22 @@ export class ChannelEntity {
   @ApiProperty()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(
+    () => ChannelMemberEntity,
+    (channelMember) => channelMember.channel,
+  )
+  channelMembers: ChannelMemberEntity[];
+
+  @OneToMany(
+    () => ChannelBlockedMemberEntity,
+    (channelBlockedMember) => channelBlockedMember.channel,
+  )
+  channelBlockedMembers: ChannelBlockedMemberEntity[];
+
+  @OneToMany(
+    () => ChannelMutedMemberEntity,
+    (channelMutedMember) => channelMutedMember.channel,
+  )
+  channelMutedMembers: ChannelMutedMemberEntity[];
 }

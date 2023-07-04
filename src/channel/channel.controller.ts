@@ -12,6 +12,7 @@ import {
 import { ChannelService } from './channel.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
+import { CreateChannelMemberDto } from './dto/create-channel-member.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiCreatedResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ChannelEntity } from './entities/channel.entity';
@@ -54,5 +55,17 @@ export class ChannelController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.channelService.remove(+id);
+  }
+
+  @Post(':channelId/member')
+  @ApiOperation({ summary: '채널 참여', description: '채널 참여' })
+  @ApiResponse({ status: 200, description: 'OK' })
+  join(@Request() req, @Param('channelId') channelId: number) {
+    const createChannelMemberDto: CreateChannelMemberDto = {
+      channelId,
+      userId: req.user.id,
+      isAdmin: false,
+    };
+    return this.channelService.join(createChannelMemberDto);
   }
 }

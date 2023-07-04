@@ -7,11 +7,14 @@ import {
   Unique,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { ChannelEntity } from './channel.entity';
 
 @Entity()
 export class ChannelMemberEntity {
-  @PrimaryColumn({ unique: true, nullable: false })
+  @PrimaryGeneratedColumn()
   @ApiProperty()
   id: number;
 
@@ -34,4 +37,8 @@ export class ChannelMemberEntity {
   @ApiProperty()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @ManyToOne(() => ChannelEntity, (channel) => channel.channelMembers)
+  @JoinColumn({ name: 'channelId' })
+  channel: ChannelEntity;
 }
