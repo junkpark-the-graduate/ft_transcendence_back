@@ -42,21 +42,22 @@ export class ChannelController {
     return this.channelService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.channelService.findOne(+id);
-  }
+  // @Get(':id')
+  // findOne(@Param('id') id: string) {
+  //   return this.channelService.findOne(+id);
+  // }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChannelDto: UpdateChannelDto) {
-    return this.channelService.update(+id, updateChannelDto);
-  }
+  // @Patch(':id')
+  // update(@Param('id') id: string, @Body() updateChannelDto: UpdateChannelDto) {
+  //   return this.channelService.update(+id, updateChannelDto);
+  // }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.channelService.remove(+id);
-  }
+  // @Delete(':id')
+  // remove(@Param('id') id: string) {
+  //   return this.channelService.remove(+id);
+  // }
 
+  @UseGuards(AuthGuard('jwt'))
   @Post(':channelId/member')
   @ApiOperation({ summary: '채널 참여', description: '채널 참여' })
   @ApiResponse({ status: 200, description: 'OK' })

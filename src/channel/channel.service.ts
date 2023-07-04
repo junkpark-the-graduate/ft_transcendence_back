@@ -62,17 +62,17 @@ export class ChannelService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} channel`;
-  }
+  // findOne(id: number) {
+  //   return `This action returns a #${id} channel`;
+  // }
 
-  update(id: number, updateChannelDto: UpdateChannelDto) {
-    return `This action updates a #${id} channel`;
-  }
+  // update(id: number, updateChannelDto: UpdateChannelDto) {
+  //   return `This action updates a #${id} channel`;
+  // }
 
-  remove(id: number) {
-    return `This action removes a #${id} channel`;
-  }
+  // remove(id: number) {
+  //   return `This action removes a #${id} channel`;
+  // }
 
   async join(createChannelMemberDto: CreateChannelMemberDto) {
     try {
@@ -80,12 +80,31 @@ export class ChannelService {
         where: {
           id: createChannelMemberDto.channelId,
         },
+        relations: {
+          channelMembers: true,
+        },
       });
 
-      this.channelMemberRepository.create(createChannelMemberDto);
+      if (!channel) throw new ConflictException('존재하지 않는 채널입니다.');
+      // Todo: 비밀번호 체크
+      // if (channel.password !== createChannelMemberDto.password)
+      //   throw new ConflictException('비밀번호가 틀렸습니다.');
+
+      if (
+        channel.channelMembers.find(
+          (member) => member.userId === createChannelMemberDto.userId,
+        )
+      )
+        throw new ConflictException('이미 참여한 채널입니다.');
+
+      const channelMember = this.channelMemberRepository.create(
+        createChannelMemberDto,
+      );
+      await this.channelMemberRepository.save(channelMember);
 
       return channel;
     } catch (error) {
+      if (error.status) throw error;
       throw new InternalServerErrorException(error.message);
     }
   }
