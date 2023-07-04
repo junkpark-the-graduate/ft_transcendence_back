@@ -11,7 +11,7 @@ import {
 import { ChannelEntity } from './channel.entity';
 
 @Entity()
-export class ChannelBlockedMemberEntity {
+export class ChannelBannedMemberEntity {
   @PrimaryGeneratedColumn()
   @ApiProperty()
   id: number;
@@ -26,7 +26,7 @@ export class ChannelBlockedMemberEntity {
 
   @ApiProperty()
   @Column({ default: true })
-  isBlocked: boolean;
+  isBanned: boolean;
 
   @ApiProperty()
   @CreateDateColumn()
@@ -36,7 +36,7 @@ export class ChannelBlockedMemberEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => ChannelEntity, (channel) => channel.channelBlockedMembers)
+  @ManyToOne(() => ChannelEntity, (channel) => channel.channelBannedMembers)
   @JoinColumn({ name: 'channelId' })
   channel: ChannelEntity;
 }

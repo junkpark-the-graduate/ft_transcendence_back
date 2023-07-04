@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChannelEntity } from './entities/channel.entity';
 import { ChannelMemberEntity } from './entities/channel-member.entity';
 import { ChannelMutedMemberEntity } from './entities/channel-muted-member.entity';
-import { ChannelBlockedMemberEntity } from './entities/channel-blocked-member.entity';
+import { ChannelBannedMemberEntity } from './entities/channel-banned-member.entity';
 
 @Module({
   imports: [
@@ -13,7 +13,7 @@ import { ChannelBlockedMemberEntity } from './entities/channel-blocked-member.en
       ChannelEntity,
       ChannelMemberEntity,
       ChannelMutedMemberEntity,
-      ChannelBlockedMemberEntity,
+      ChannelBannedMemberEntity,
     ]),
   ],
   controllers: [ChannelController],

@@ -14,7 +14,8 @@ import { ChannelService } from './channel.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { CreateChannelMemberDto } from './dto/create-channel-member.dto';
-import { CreateChannelMutedMemberDto } from './dto/create-channel-muted-member';
+import { CreateChannelMutedMemberDto } from './dto/create-channel-muted-member.dto';
+import { CreateChannelBannedMemberDto } from './dto/create-channel-banned-member.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiCreatedResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ChannelEntity } from './entities/channel.entity';
@@ -44,21 +45,6 @@ export class ChannelController {
     return this.channelService.findAll();
   }
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.channelService.findOne(+id);
-  // }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateChannelDto: UpdateChannelDto) {
-  //   return this.channelService.update(+id, updateChannelDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.channelService.remove(+id);
-  // }
-
   @UseGuards(AuthGuard('jwt'))
   @Post(':channelId/member')
   @ApiOperation({ summary: '채널 참여', description: '채널 참여' })
@@ -87,5 +73,22 @@ export class ChannelController {
       userId: memberId,
     };
     return this.channelService.mute(createChannelMutedMemberDto, userId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post(':channelId/banned-member')
+  @ApiOperation({ summary: '멤버 블락', description: '블락' })
+  @ApiResponse({ status: 200, description: 'OK' })
+  ban(
+    @Request() req,
+    @Param('channelId') channelId: number,
+    @Query('memberId') memberId: number,
+  ) {
+    const userId = req.user.id;
+    const createChannelBannedMemberDto: CreateChannelBannedMemberDto = {
+      channelId,
+      userId: memberId,
+    };
+    return this.channelService.ban(createChannelBannedMemberDto, userId);
   }
 }

@@ -8,7 +8,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ChannelMemberEntity } from './channel-member.entity';
-import { ChannelBlockedMemberEntity } from './channel-blocked-member.entity';
+import { ChannelBannedMemberEntity } from './channel-banned-member.entity';
 import { ChannelMutedMemberEntity } from './channel-muted-member.entity';
 
 export enum EChannelType {
@@ -59,10 +59,10 @@ export class ChannelEntity {
   channelMembers: ChannelMemberEntity[];
 
   @OneToMany(
-    () => ChannelBlockedMemberEntity,
-    (channelBlockedMember) => channelBlockedMember.channel,
+    () => ChannelBannedMemberEntity,
+    (channelBannedMember) => channelBannedMember.channel,
   )
-  channelBlockedMembers: ChannelBlockedMemberEntity[];
+  channelBannedMembers: ChannelBannedMemberEntity[];
 
   @OneToMany(
     () => ChannelMutedMemberEntity,
