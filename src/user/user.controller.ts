@@ -62,7 +62,18 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'OK', type: UserEntity })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   findOne(@Request() req) {
+    console.log(req);
     return this.userService.findOne(req.user.id);
+  }
+
+  @Get('/:id')
+  @ApiOperation({
+    summary: '특정 유저 조회 API',
+    description: 'id로 특정 유저 조회',
+  })
+  @ApiResponse({ status: 200, description: 'OK', type: UserEntity })
+  findUser(@Param('id') userId: number) {
+    return this.userService.findOne(userId);
   }
 
   @UseGuards(AuthGuard('jwt'))
