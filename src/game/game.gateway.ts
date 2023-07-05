@@ -26,8 +26,8 @@ import {
   cors: {
     origin: [
       'http://127.0.0.1:3000',
-      'http://localhost:3000',
       'http://127.0.0.1:3001',
+      'http://localhost:3000',
       'http://localhost:3001',
     ],
     credentials: true,
@@ -62,9 +62,10 @@ export class GameGateway
 
       const room = this.io.in('dummy_room');
       this.io.in('dummy_room').emit('game_test', 'Game start');
-      this.gameEngine.gameInit(player1, player2, room);
-      console.log('room["test"]: ', room['test']);
-      this.gameEngine.gameLoop(player1, player2, room);
+      room['player1'] = player1;
+      room['player2'] = player2;
+      this.gameEngine.gameInit(room);
+      this.gameEngine.gameLoop(room);
 
       console.log('player1: ', player1['paddle1']);
       // this.gameEngine.gameLoop(socket);
@@ -77,10 +78,10 @@ export class GameGateway
     this.logger.log(`Client disconnected: ${socket.id}`);
     // TODO interval 삭제
     //const interval = socket['interval'];
-    //const interval = this.io.in('dummy_room')['interval'];
-
+    const interval = this.io.in('dummy_room')['interval'];
+    console.log('interval: ', interval);
     socket.leave('dummy_room');
-    //clearInterval(interval);
+    clearInterval(interval);
   }
 
   @SubscribeMessage('key_left')

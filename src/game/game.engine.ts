@@ -41,24 +41,9 @@ export class GameEngine {
     };
     room.emit('game', game);
   }
-  gameInit(player1, player2, room) {
-    // const roomName = 'dummy_room';
-    // this.gameData[roomName] = {
-    //   player1,
-    //   player2,
-    //   ball: {
-    //     x: 0,
-    //     y: 0,
-    //   },
-    // };
-    // const game = {
-    //   player1,
-    //   player2,
-    //   ball: {
-    //     x: 0,
-    //     y: 0,
-    //   },
-    // };
+  gameInit(room) {
+    const { player1, player2 } = room;
+
     room['ball'] = {
       pos: {
         x: 0,
@@ -68,6 +53,10 @@ export class GameEngine {
         x: 1,
         y: 1,
       },
+    };
+    room['score'] = {
+      player1: 0,
+      player2: 0,
     };
     player1.emit('game_init', { isPlayer1: true });
     player2.emit('game_init', { isPlayer1: false });
@@ -82,74 +71,40 @@ export class GameEngine {
       y: 30,
     };
 
-    // let game_init: Game;
-    // game_init.paddle1.x = 0;
-    // game_init.paddle1.y = -30;
-    // game_init.paddle2.x = 0;
-    // game_init.paddle2.y = 30;
-    // game_init.ball.x = 0;
-    // game_init.ball.y = 0;
-
-    // player1['state'] = game_init;
-    // player2['state'] = game_init;
+    player1['isPlayer1'] = true;
+    player2['isPlayer1'] = false;
   }
 
-  // room.emit('game', {
-  //   paddle1: { // if player1 -> 내꺼
-  //     position: {
-  //       x: 0,
-  //       y: -30,
-  //     },
-  //   },
-  //   paddle2: {
-  //     position: { // 상대꺼?
-  //       x: 0,
-  //       y: 30,
-  //     },
+  gameLoop(room: any) {
+    if (room['interval']) clearInterval(room['interval']);
 
-  // socket['paddle1'] = {
-  //   position: {
-  //     x: 0,
-  //     y: -30,
-  //   },
-  // };
-  // socket['paddle2'] = {
-  //   position: {
-  //     x: 0,
-  //     y: 30,
-  //   },
-  // };
-  // socket['ball'] = {
-  //   position: {
-  //     x: 0,
-  //     y: 0,
-  //   },
-  //   dir: {
-  //     x: 1,
-  //     y: 1,
-  //   },
-  //   speed: 1,
-  // };
-  //}
-
-  gameLoop(player1, player2, room: any) {
-    const ball = room['ball'];
     const interval = setInterval(() => {
-      room.emit('game', this.gameUpdate(player1, player2, ball));
+      room.emit('game', this.gameUpdate(room));
     }, 1000 / 60);
     room['interval'] = interval;
   }
 
   movePaddleLeft(socket: Socket) {
-    if (socket['paddle'].x > -(PLANE_WIDTH / 2) + PADDLE_WIDTH / 2)
-      socket['paddle'].x -= PADDLE_SPEED;
+    if (socket['isPlayer1']) {
+      if (socket['paddle'].x > -(PLANE_WIDTH / 2) + PADDLE_WIDTH / 2)
+        socket['paddle'].x -= PADDLE_SPEED;
+    } else {
+      if (socket['paddle'].x < PLANE_WIDTH / 2 - PADDLE_WIDTH / 2)
+        socket['paddle'].x += PADDLE_SPEED;
+    }
   }
   movePaddleRight(socket: Socket) {
-    if (socket['paddle'].x < PLANE_WIDTH / 2 - PADDLE_WIDTH / 2)
-      socket['paddle'].x += PADDLE_SPEED;
+    if (socket['isPlayer1']) {
+      if (socket['paddle'].x < PLANE_WIDTH / 2 - PADDLE_WIDTH / 2)
+        socket['paddle'].x += PADDLE_SPEED;
+    } else {
+      if (socket['paddle'].x > -(PLANE_WIDTH / 2) + PADDLE_WIDTH / 2)
+        socket['paddle'].x -= PADDLE_SPEED;
+    }
   }
 
-  gameUpdate(player1, player2, ball) {
+  gameUpdate(room) {
+    const { player1, player2, ball } = room;
     const paddle1 = player1['paddle'];
     const paddle2 = player2['paddle'];
 
@@ -160,10 +115,19 @@ export class GameEngine {
     // 1인칭
     // camera.position.x = paddle1.position.x;
 
+    // 벽
     if (ball.pos.x <= -PLANE_WIDTH / 2 || ball.pos.x >= PLANE_WIDTH / 2) {
       ball.dir.x = -ball.dir.x;
     }
+
+    // 점수
     if (ball.pos.y <= -PLANE_HEIGHT / 2 || ball.pos.y >= PLANE_HEIGHT / 2) {
+      if (ball.pos.y > 0) {
+        room.score.player1++;
+      } else {
+        room.score.player2++;
+      }
+      room.emit('score', { score: room.score });
       ball.pos.x = 0;
       ball.pos.y = 0;
     }
