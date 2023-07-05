@@ -1,11 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  Entity,
-  Column,
-  PrimaryColumn,
-  PrimaryGeneratedColumn,
-  Unique,
-} from 'typeorm';
+import { GameRecordEntity } from 'src/game/entities/game-record.entity';
+import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
 
 @Entity()
 export class UserEntity {
@@ -27,4 +22,7 @@ export class UserEntity {
 
   @Column({ default: false })
   twoFactor: boolean;
+
+  @OneToMany(() => GameRecordEntity, (gameRecord) => gameRecord.userFtId)
+  gameRecords: GameRecordEntity[];
 }

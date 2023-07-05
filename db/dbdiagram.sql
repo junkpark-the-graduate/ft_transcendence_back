@@ -67,10 +67,8 @@ Table Messages {
 
 Table Games {
   id                int [primary key]
-  ftId              int
   player1Id         int
   player2Id         int
-  gameStatus        string
   gameType          string
   gameResult        string
   startTime         timestamp
