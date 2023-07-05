@@ -11,6 +11,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ChannelEntity } from './channel.entity';
+import { UserEntity } from 'src/user/user.entity';
 
 @Entity()
 export class ChannelMutedMemberEntity {
@@ -45,4 +46,8 @@ export class ChannelMutedMemberEntity {
   @ManyToOne(() => ChannelEntity, (channel) => channel.channelMembers)
   @JoinColumn({ name: 'channelId' })
   channel: ChannelEntity;
+
+  @ManyToOne(() => UserEntity, (user) => user.channelMutedMembers)
+  @JoinColumn({ name: 'userId' })
+  user: UserEntity;
 }

@@ -1,4 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ChannelBannedMemberEntity } from 'src/channel/entities/channel-banned-member.entity';
+import { ChannelMemberEntity } from 'src/channel/entities/channel-member.entity';
+import { ChannelMutedMemberEntity } from 'src/channel/entities/channel-muted-member.entity';
+import { ChannelEntity } from 'src/channel/entities/channel.entity';
 import {
   Entity,
   Column,
@@ -7,6 +11,7 @@ import {
   Unique,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
 
 export enum EUserStatus {
@@ -56,4 +61,22 @@ export class UserEntity {
   @ApiProperty()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => ChannelEntity, (channel) => channel.user)
+  channels: ChannelEntity[];
+
+  @OneToMany(() => ChannelMemberEntity, (channelMember) => channelMember.user)
+  channelMembers: ChannelMemberEntity[];
+
+  @OneToMany(
+    () => ChannelMutedMemberEntity,
+    (channelMutedMember) => channelMutedMember.user,
+  )
+  channelMutedMembers: ChannelMutedMemberEntity[];
+
+  @OneToMany(
+    () => ChannelBannedMemberEntity,
+    (channelBannedMember) => channelBannedMember.user,
+  )
+  channelBannedMembers: ChannelBannedMemberEntity[];
 }

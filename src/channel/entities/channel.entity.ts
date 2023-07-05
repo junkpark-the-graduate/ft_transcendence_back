@@ -6,10 +6,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ChannelMemberEntity } from './channel-member.entity';
 import { ChannelBannedMemberEntity } from './channel-banned-member.entity';
 import { ChannelMutedMemberEntity } from './channel-muted-member.entity';
+import { UserEntity } from 'src/user/user.entity';
 
 export enum EChannelType {
   direct,
@@ -69,4 +72,8 @@ export class ChannelEntity {
     (channelMutedMember) => channelMutedMember.channel,
   )
   channelMutedMembers: ChannelMutedMemberEntity[];
+
+  @ManyToOne(() => UserEntity, (user) => user.channels)
+  @JoinColumn({ name: 'userId' })
+  user: UserEntity;
 }

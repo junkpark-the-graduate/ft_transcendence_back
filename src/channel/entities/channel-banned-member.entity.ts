@@ -9,6 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ChannelEntity } from './channel.entity';
+import { UserEntity } from 'src/user/user.entity';
 
 @Entity()
 export class ChannelBannedMemberEntity {
@@ -39,4 +40,8 @@ export class ChannelBannedMemberEntity {
   @ManyToOne(() => ChannelEntity, (channel) => channel.channelBannedMembers)
   @JoinColumn({ name: 'channelId' })
   channel: ChannelEntity;
+
+  @ManyToOne(() => UserEntity, (user) => user.channelBannedMembers)
+  @JoinColumn({ name: 'userId' })
+  user: UserEntity;
 }

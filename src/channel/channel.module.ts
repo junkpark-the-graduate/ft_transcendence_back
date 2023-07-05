@@ -18,5 +18,6 @@ import { ChannelBannedMemberEntity } from './entities/channel-banned-member.enti
   ],
   controllers: [ChannelController],
   providers: [ChannelService],
+  exports: [ChannelService],
 })
 export class ChannelModule {}

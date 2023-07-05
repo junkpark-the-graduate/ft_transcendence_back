@@ -41,6 +41,7 @@ export class ChannelService {
           name: name,
         },
       });
+
       if (tmp) throw new ConflictException('이미 존재하는 채널 이름입니다.');
 
       const channel = this.channelRepository.create({
@@ -73,6 +74,51 @@ export class ChannelService {
       const channels = await this.channelRepository.find();
       return channels;
     } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async findOne(channelId: number | string) {
+    if (typeof channelId === 'string') channelId = parseInt(channelId);
+    try {
+      const channel = await this.channelRepository.findOne({
+        where: {
+          id: channelId,
+        },
+        relations: [
+          'channelMembers',
+          'channelMembers.user',
+          'channelMutedMembers',
+          'channelMutedMembers.user', //Todo: 필요 없으면 지워야함
+          'channelBannedMembers',
+          'channelBannedMembers.user',
+        ],
+      });
+      if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
+
+      return channel;
+    } catch (error) {
+      if (error.status) throw error;
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async findOneChannelMember(channelId: number | string, userId: number) {
+    if (typeof channelId === 'string') channelId = parseInt(channelId);
+    try {
+      const channelMember = await this.channelMemberRepository.findOne({
+        where: {
+          channelId,
+          userId,
+        },
+        relations: ['user'],
+      });
+      if (!channelMember)
+        throw new NotFoundException('존재하지 않는 채널 멤버입니다.');
+
+      return channelMember;
+    } catch (error) {
+      if (error.status) throw error;
       throw new InternalServerErrorException(error.message);
     }
   }
@@ -158,6 +204,8 @@ export class ChannelService {
         createChannelMutedMemberDto,
       );
       await this.channelMutedMemberRepository.save(mutedMember);
+
+      // Todo: chat.gateway 에 접근해서 mutedMember 추가
 
       return mutedMember;
     } catch (error) {
