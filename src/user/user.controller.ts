@@ -62,7 +62,6 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'OK', type: UserEntity })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   findOne(@Request() req) {
-    console.log(req);
     return this.userService.findOne(req.user.id);
   }
 
@@ -91,8 +90,6 @@ export class UserController {
   @Patch('/upload')
   @UseInterceptors(FileInterceptor('file'))
   uploadFile(@Request() req, @UploadedFile() file: Express.Multer.File) {
-    console.log('id: ', req.user.id);
-    console.log('file:', file);
     return this.userService.updateImage(
       req.user.id,
       file.filename,
