@@ -31,7 +31,7 @@ export class AuthController {
     return this.tfaAuthService.authTwoFactorToken(twoFactorTokenDto);
   }
 
-  @Post('/tfa/verification')
+  @Post('/tfa-verification')
   @ApiOperation({ summary: 'twoFactor verification' })
   @ApiCreatedResponse({ description: '' })
   async verifyTwoFactorCode(@Query() twoFactorCodeDto: TwoFactorCodeDto) {
