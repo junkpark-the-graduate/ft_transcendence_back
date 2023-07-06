@@ -28,7 +28,7 @@ export class EmailService {
     // 이 링크를 통해 우리 서비스로 이메일 인증 요청이 들어옴
     // const baseUrl = 'http://localhost:3001'; // TODO: config
 
-    const url = `http://localhost:3000/auth/tfa/verification?twoFactorCode=${twoFactorCode}`;
+    const url = `${process.env.FRONT_END_POINT}/auth/tfa-verification?twoFactorCode=${twoFactorCode}`;
 
     // 메일 본문 구성 form 태그를 이용해 POST 요청 실시
     console.log(process.env.GMAIL_ID, process.env.GMAIL_PW);
