@@ -144,8 +144,10 @@ export class ChannelService {
         channel.channelMembers.find(
           (member) => member.userId === createChannelMemberDto.userId,
         )
-      )
-        throw new ConflictException('이미 참여한 채널입니다.');
+      ) {
+        return channel;
+        // throw new ConflictException("이미 참여한 채녈입니다");
+      }
 
       const bannedMember = channel.channelBannedMembers.find(
         (member) => member.userId === createChannelMemberDto.userId,

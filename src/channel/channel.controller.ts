@@ -77,7 +77,10 @@ export class ChannelController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post(':channelId/banned-member')
-  @ApiOperation({ summary: '멤버 블락', description: '블락' })
+  @ApiOperation({
+    summary: '멤버 차단(ban)',
+    description: '채널에서 쫓겨나고 해당 채널에 다시 들어올 수 없음',
+  })
   @ApiResponse({ status: 200, description: 'OK' })
   ban(
     @Request() req,
