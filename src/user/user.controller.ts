@@ -90,11 +90,8 @@ export class UserController {
   @Patch('/upload')
   @UseInterceptors(FileInterceptor('file'))
   uploadFile(@Request() req, @UploadedFile() file: Express.Multer.File) {
-<<<<<<< HEAD
-=======
     console.log('id: ', req.user.id);
     console.log('file:', file);
->>>>>>> ec056a6 (feat: updating image (Multer, ServeStaticMocule))
     return this.userService.updateImage(
       req.user.id,
       file.filename,
