@@ -16,6 +16,7 @@ import { UpdateChannelDto } from './dto/update-channel.dto';
 import { CreateChannelMemberDto } from './dto/create-channel-member.dto';
 import { CreateChannelMutedMemberDto } from './dto/create-channel-muted-member.dto';
 import { CreateChannelBannedMemberDto } from './dto/create-channel-banned-member.dto';
+import { DeleteChannelBannedMemberDto } from './dto/delete-channel-banned-member.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiCreatedResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ChannelEntity } from './entities/channel.entity';
@@ -93,5 +94,69 @@ export class ChannelController {
       userId: memberId,
     };
     return this.channelService.ban(createChannelBannedMemberDto, userId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':channelId/member')
+  @ApiOperation({
+    summary: '채널 멤버 조회 API',
+    description: '모든 채널 멤버 조히',
+  })
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  @ApiResponse({ status: 200, description: 'OK' })
+  findAllChannelMember() {
+    return this.channelService.findAllChannelMember();
+  }
+
+  //get muted members
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':channelId/muted-member')
+  @ApiOperation({
+    summary: '채널 뮤트 멤버 조회 API',
+    description: '모든 채널 뮤트 멤버 조회',
+  })
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  @ApiResponse({ status: 200, description: 'OK' })
+  findAllChannelMutedMember() {
+    return this.channelService.findAllChannelMutedMember();
+  }
+
+  //get banned members
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':channelId/banned-member')
+  @ApiOperation({
+    summary: '채널 차단 멤버 조회 API',
+    description: '모든 채널 차단 멤버 조회',
+  })
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  @ApiResponse({ status: 200, description: 'OK' })
+  findAllChannelBannedMember() {
+    return this.channelService.findAllChannelBannedMember();
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':channelId/banned-member')
+  @ApiOperation({
+    summary: '채널 차단 멤버 삭제 API',
+    description: '차단된 멤버 삭제(차단 해제)',
+  })
+  @ApiResponse({ status: 200, description: 'OK' })
+  deleteChannelBannedMember(
+    @Request() req,
+    @Param('channelId') channelId: number,
+    @Query('memberId') memberId: number,
+  ) {
+    const userId = req.user.id;
+    const deleteChannelBannedMemberDto: DeleteChannelBannedMemberDto = {
+      channelId,
+      userId: memberId,
+    };
+    console.log('userId', userId);
+    console.log('deleteChannelBannedMemberDto', deleteChannelBannedMemberDto);
+
+    return this.channelService.deleteChannelBannedMember(
+      userId,
+      deleteChannelBannedMemberDto,
+    );
   }
 }

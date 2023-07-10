@@ -19,7 +19,6 @@ import { WsJwtGuard } from 'src/auth/ws-jwt-guard.guard';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { ChannelService } from 'src/channel/channel.service';
-import { In } from 'typeorm';
 // import { JwtPayload } from 'src/auth/jwt-payload.interface'; // any 타입 대신 사용할수도
 
 interface Chat {
@@ -29,6 +28,7 @@ interface Chat {
 }
 
 interface User {
+  socket: Socket;
   id: number;
   name: string;
   image: string;
@@ -130,6 +130,7 @@ export class ChatGateway
       if (!channelMember) throw new NotFoundException('채널 멤버가 아닙니다');
 
       this.channels[channelId].connectedMembers.push({
+        socket: socket,
         id: channelMember.user.id,
         name: channelMember.user.name,
         image: channelMember.user.image,
@@ -160,5 +161,30 @@ export class ChatGateway
       message: chat.message,
       socketId: socket.id,
     });
+  }
+
+  public async kickMember(channelId: number, userId: number) {
+    // channel.service 에서 해야함
+    // const channel = await this.channelService.findOne(channelId);
+    // if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
+
+    // const channelMember = await this.channelService.findOneChannelMember(
+    //   channelId,
+    //   userId,
+    // );
+    // if (!channelMember) throw new NotFoundException('채널 멤버가 아닙니다');
+
+    const user = this.channels[channelId].connectedMembers.find(
+      (user) => user.id === userId,
+    );
+
+    if (user) {
+      user.socket.emit('kicked');
+      user.socket.disconnect();
+      this.channels[channelId].connectedMembers = this.channels[
+        channelId
+      ].connectedMembers.filter((user) => user.id !== userId);
+      this.logger.log(`kicked : ${user.socket.id} ${channelId}`);
+    }
   }
 }

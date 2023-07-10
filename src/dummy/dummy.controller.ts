@@ -10,21 +10,35 @@ export class DummyController {
     private readonly dummyService: DummyService,
   ) {}
 
-  dummy = {
+  dummy1 = {
     id: 1,
     name: 'test1',
     email: 'test1@gmail.com',
     image: null,
   };
 
+  dummy2 = {
+    id: 2,
+    name: 'test2',
+    email: 'test2@gmail.com',
+    image: null,
+  };
+
   @Post()
-  create() {
-    const dto = this.dummy as CreateUserDto;
-    return this.userService.create(dto);
+  async create() {
+    const dto1 = this.dummy1 as CreateUserDto;
+    const dto2 = this.dummy2 as CreateUserDto;
+    const res = [];
+    res.push(await this.userService.create(dto1));
+    res.push(await this.userService.create(dto2));
+    return res;
   }
 
   @Get()
-  getDummyAccessToken() {
-    return this.dummyService.getDummyAccessToken(this.dummy.id);
+  async getDummyAccessToken() {
+    const res = [];
+    res.push(await this.dummyService.getDummyAccessToken(this.dummy1.id));
+    res.push(await this.dummyService.getDummyAccessToken(this.dummy2.id));
+    return res;
   }
 }
