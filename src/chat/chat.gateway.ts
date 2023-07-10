@@ -155,7 +155,7 @@ export class ChatGateway
     const user = this.channels[channelId].connectedMembers.find(
       (user) => user.id === userId,
     );
-    socket.broadcast.emit('new_chat', {
+    socket.to(channelId).emit('new_chat', {
       username: user.name,
       message: chat.message,
       socketId: socket.id,
