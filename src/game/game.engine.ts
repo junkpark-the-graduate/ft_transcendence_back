@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 //import { Socket } from 'socket.io';
 import { Server, Socket } from 'socket.io';
 import {
@@ -10,6 +12,7 @@ import {
   PLANE_WIDTH,
   PLANE_HEIGHT,
 } from './game.constants';
+import { GameEntity } from './entities/game.entity';
 
 interface Game {
   paddle1: {
@@ -28,6 +31,10 @@ interface Game {
 
 @Injectable()
 export class GameEngine {
+  constructor(
+    @InjectRepository(GameEntity)
+    private readonly gameRepository: Repository<GameEntity>,
+  ) {}
   //private gameData: Map<string, Game> = new Map<string, Game>();
 
   updateGame(player1, player2, room) {
@@ -130,6 +137,28 @@ export class GameEngine {
       room.emit('score', { score: room.score });
       ball.pos.x = 0;
       ball.pos.y = 0;
+      // 일정 점수 도달 시 db 저장
+      if (room.score.player1 === 10) {
+        const game = this.gameRepository.create({
+          player1Id: player1['ftId'],
+          player2Id: player2['ftId'],
+          gameType: 'normal',
+          gameResult: 'player1',
+          startTime: new Date(),
+        });
+        this.gameRepository.save(game);
+        clearInterval(room['interval']);
+      } else if (room.score.player2 === 10) {
+        const game = this.gameRepository.create({
+          player1Id: player1['ftId'],
+          player2Id: player2['ftId'],
+          gameType: 'normal',
+          gameResult: 'player2',
+          startTime: new Date(),
+        });
+        this.gameRepository.save(game);
+        clearInterval(room['interval']);
+      }
     }
 
     if (

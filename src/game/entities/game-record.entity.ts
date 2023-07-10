@@ -22,11 +22,9 @@ export class GameRecordEntity {
   @PrimaryColumn()
   gameId: number;
 
-  //@JoinColumn({ name: 'gameId' })
   @ManyToOne(() => GameEntity, (game) => game.id)
   game: GameEntity;
 
-  //@JoinColumn({ name: 'userId' })
   @ManyToOne(() => UserEntity, (user) => user.ftId)
   user: UserEntity;
 }
