@@ -40,7 +40,7 @@ export class ChannelController {
   @UseGuards(AuthGuard('jwt'))
   @Delete(':channelId')
   @ApiOperation({ summary: '채널 삭제 API', description: '채널 삭제' })
-  @ApiResponse({ status:200, description: 'OK' })
+  @ApiResponse({ status: 200, description: 'OK' })
   delete(@Request() req, @Param('channelId') channelId: number) {
     return this.channelService.delete(req.user.id, channelId);
   }
@@ -112,8 +112,8 @@ export class ChannelController {
   })
   // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
   @ApiResponse({ status: 200, description: 'OK' })
-  findAllChannelMember() {
-    return this.channelService.findAllChannelMember();
+  findAllChannelMember(@Param('channelId') channelId: number) {
+    return this.channelService.findAllChannelMember(channelId);
   }
 
   //get muted members
@@ -125,8 +125,8 @@ export class ChannelController {
   })
   // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
   @ApiResponse({ status: 200, description: 'OK' })
-  findAllChannelMutedMember() {
-    return this.channelService.findAllChannelMutedMember();
+  findAllChannelMutedMember(@Param('channelId') channelId: number) {
+    return this.channelService.findAllChannelMutedMember(channelId);
   }
 
   //get banned members
@@ -138,8 +138,8 @@ export class ChannelController {
   })
   // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
   @ApiResponse({ status: 200, description: 'OK' })
-  findAllChannelBannedMember() {
-    return this.channelService.findAllChannelBannedMember();
+  findAllChannelBannedMember(@Param('channelId') channelId: number) {
+    return this.channelService.findAllChannelBannedMember(channelId);
   }
 
   @UseGuards(AuthGuard('jwt'))

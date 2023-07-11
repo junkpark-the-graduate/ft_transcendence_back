@@ -171,6 +171,7 @@ export class ChannelService {
           (member) => member.userId === createChannelMemberDto.userId,
         )
       ) {
+        // TODO : 이미 참여한 채널일때의 상황 구별해야함
         return channel;
         // throw new ConflictException("이미 참여한 채녈입니다");
       }
@@ -295,23 +296,40 @@ export class ChannelService {
     }
   }
 
-  async findAllChannelMember(): Promise<ChannelMemberEntity[]> {
-    const channelMembers = await this.channelMemberRepository.find();
+  async findAllChannelMember(
+    channelId: number,
+  ): Promise<ChannelMemberEntity[]> {
+    const channelMembers = await this.channelMemberRepository.find({
+      where: {
+        channelId: channelId,
+      },
+    });
     console.log(channelMembers);
     return channelMembers;
   }
 
-  async findAllChannelMutedMember(): Promise<ChannelMutedMemberEntity[]> {
+  async findAllChannelMutedMember(
+    channelId: number,
+  ): Promise<ChannelMutedMemberEntity[]> {
     // TODO: 채널관리만 조회할 수 있도록
-    const channelMutedMembers = await this.channelMutedMemberRepository.find();
+    const channelMutedMembers = await this.channelMutedMemberRepository.find({
+      where: {
+        channelId: channelId,
+      },
+    });
     console.log(channelMutedMembers);
     return channelMutedMembers;
   }
 
-  async findAllChannelBannedMember(): Promise<ChannelBannedMemberEntity[]> {
+  async findAllChannelBannedMember(
+    channelId: number,
+  ): Promise<ChannelBannedMemberEntity[]> {
     // TODO: 채널관리만 조회할 수 있도록
-    const channelBannedMembers =
-      await this.channelBannedMemberRepository.find();
+    const channelBannedMembers = await this.channelBannedMemberRepository.find({
+      where: {
+        channelId: channelId,
+      },
+    });
     console.log(channelBannedMembers);
     return channelBannedMembers;
   }
