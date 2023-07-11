@@ -87,7 +87,7 @@ export class ChannelService {
     // TODO : 비번 걸린 채널이면 비번 확인
 
     if (userId === channel.ownerId) {
-      await this.channelMemberRepository.delete({ channerId: channelId });
+      await this.channelMemberRepository.delete({ channelId: channelId });
       await this.channelRepository.delete(channelId);
       return channel;
     } else {
