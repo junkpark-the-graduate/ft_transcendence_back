@@ -299,6 +299,7 @@ export class ChannelService {
   async findAllChannelMember(
     channelId: number,
   ): Promise<ChannelMemberEntity[]> {
+    // TODO: 채널관리만 조회할 수 있도록
     const channelMembers = await this.channelMemberRepository.find({
       where: {
         channelId: channelId,
@@ -368,5 +369,20 @@ export class ChannelService {
       if (error.status) throw error;
       throw new InternalServerErrorException(error.message);
     }
+  }
+
+  async checkChannelAdmin(userId: number, channelId: number): Promise<boolean> {
+    const channelMember = await this.channelMemberRepository.findOne({
+      where: {
+        userId: userId,
+        channelId: channelId,
+      },
+    });
+    if (!channelMember)
+      throw new NotFoundException('존재하지 않는 채널 멤버입니다.');
+    if (!channelMember.isAdmin)
+      throw new UnauthorizedException('채널 관리자가 아닙니다.');
+
+    return true;
   }
 }

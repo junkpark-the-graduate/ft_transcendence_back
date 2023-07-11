@@ -20,6 +20,7 @@ import { DeleteChannelBannedMemberDto } from './dto/delete-channel-banned-member
 import { AuthGuard } from '@nestjs/passport';
 import { ApiCreatedResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ChannelEntity } from './entities/channel.entity';
+import { get } from 'http';
 
 @Controller('channel')
 export class ChannelController {
@@ -166,5 +167,16 @@ export class ChannelController {
       userId,
       deleteChannelBannedMemberDto,
     );
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':channelId/admin')
+  @ApiOperation({
+    summary: '채널 관리자 조회 API',
+    description: '채널 관리자 조회',
+  })
+  @ApiResponse({ status: 200, description: 'OK' })
+  checkchannelAdmin(@Request() req, @Param('channelId') channelId: number) {
+    return this.channelService.checkChannelAdmin(req.user.id, channelId);
   }
 }
