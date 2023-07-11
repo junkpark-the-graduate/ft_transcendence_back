@@ -38,8 +38,16 @@ export class ChannelController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Delete(':channelId')
+  @ApiOperation({ summary: '채널 삭제 API', description: '채널 삭제' })
+  @ApiResponse({ status:200, description: 'OK' })
+  delete(@Request() req, @Param('channelId') channelId: number) {
+    return this.channelService.delete(req.user.id, channelId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Get()
-  @ApiOperation({ summary: '채널 조회 API', description: '모든 채널 조히' })
+  @ApiOperation({ summary: '채널 조회 API', description: '모든 채널 조회' })
   // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
   @ApiResponse({ status: 200, description: 'OK' })
   findAll() {

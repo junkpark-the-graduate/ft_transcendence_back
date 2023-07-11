@@ -76,6 +76,25 @@ export class ChannelService {
     }
   }
 
+  async delete(userId: number, channelId: number) {
+    const channel = await this.channelRepository.findOne({
+      where: {
+        id: channelId,
+      },
+    });
+    if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
+
+    // TODO : 비번 걸린 채널이면 비번 확인
+
+    if (userId === channel.ownerId) {
+      await this.channelMemberRepository.delete({ channerId: channelId });
+      await this.channelRepository.delete(channelId);
+      return channel;
+    } else {
+      throw new UnauthorizedException('채널 삭제 권한이 없습니다.');
+    }
+  }
+
   async findAll(): Promise<ChannelEntity[]> {
     try {
       const channels = await this.channelRepository.find();
