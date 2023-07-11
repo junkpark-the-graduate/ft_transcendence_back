@@ -11,16 +11,9 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { GameEngine } from './game.engine';
-import {
-  PADDLE_WIDTH,
-  PADDLE_HEIGHT,
-  PADDLE_SPEED,
-  BALL_SIZE,
-  BALL_SPEED,
-  PLANE_WIDTH,
-  PLANE_HEIGHT,
-} from './game.constants';
 import { JwtService } from '@nestjs/jwt';
+import { GameMatchmaker } from './game.matchmaker';
+import { UserService } from 'src/user/user.service';
 
 @WebSocketGateway(4242, {
   namespace: 'game',
@@ -34,15 +27,28 @@ import { JwtService } from '@nestjs/jwt';
     credentials: true,
   },
 })
+
+//interface PlayerData {
+//  ftId: number;
+//  mmr: number;
+//  matchTime: number;
+//  isPlayer1: boolean;
+//  paddle: {x: number, y: number}
+//}
 export class GameGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  private waitingQueue: Socket[] = [];
+  //private waitingQueue: Socket[] = [];
 
   @WebSocketServer() io: Server;
   private logger = new Logger('GameGateway');
 
-  constructor(private gameEngine: GameEngine, private jwtService: JwtService) {
+  constructor(
+    private gameEngine: GameEngine,
+    private gameMatchmaker: GameMatchmaker,
+    private jwtService: JwtService,
+    private userService: UserService,
+  ) {
     this.logger.log('GameGateway constructor');
   }
 
@@ -50,33 +56,29 @@ export class GameGateway
     this.logger.log('GameGateway initialized');
 
     const interval = setInterval(() => {
-      console.log('waitingQueue.length: ', this.waitingQueue.length);
-
-      if (this.waitingQueue.length >= 2) {
-        const player1 = this.waitingQueue.shift();
-        const player2 = this.waitingQueue.shift();
-        player1.emit('match_found', 'Match found');
-        player2.emit('match_found', 'Match found');
-        player1.join('dummy_room');
-        player2.join('dummy_room');
+      const players = this.gameMatchmaker.matchPlayers();
+      if (players) {
+        console.log('match_found');
+        players[0].emit('match_found', 'Match found');
+        players[1].emit('match_found', 'Match found');
+        players[0].join('dummy_room');
+        players[1].join('dummy_room');
         const room = this.io.in('dummy_room');
-        room['player1'] = player1;
-        room['player2'] = player2;
-
+        room['player1'] = players[0];
+        room['player2'] = players[1];
         this.gameEngine.gameInit(room);
         this.gameEngine.gameLoop(room);
       }
     }, 5000);
   }
 
-  // jwt token 검증
-  handleConnection(@ConnectedSocket() socket: Socket) {
+  async handleConnection(@ConnectedSocket() socket: Socket) {
     this.logger.log(`Client connected: ${socket.id}`);
     const accessToken = socket.handshake.query.accessToken as string;
-
     try {
       const decoded = this.jwtService.verify(accessToken);
       socket['ftId'] = decoded['sub'];
+      socket['mmr'] = (await this.userService.findOne(socket['ftId']))['mmr'];
     } catch (error) {
       socket.disconnect();
     }
@@ -89,7 +91,8 @@ export class GameGateway
 
   @SubscribeMessage('start_matchmaking')
   handleStartMatchmaking(@ConnectedSocket() socket: Socket) {
-    this.waitingQueue.push(socket);
+    socket['matchTime'] = Date.now();
+    this.gameMatchmaker.addPlayer(socket);
   }
 
   @SubscribeMessage('key_left')

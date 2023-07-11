@@ -5,6 +5,7 @@ Table Users {
   image             string
   twoFactorEnabled  bool
   onlineStatus      string
+  mmr               int
   // Wins              int
   // Losses            int
   // LadderLevel       int

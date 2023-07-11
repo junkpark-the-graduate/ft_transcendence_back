@@ -20,6 +20,9 @@ export class UserEntity {
   @Column({ nullable: true })
   image: string;
 
+  @Column({ default: 1000 })
+  mmr: number;
+
   @Column({ default: false })
   twoFactor: boolean;
 
