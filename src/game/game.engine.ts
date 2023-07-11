@@ -48,16 +48,19 @@ export class GameEngine {
     };
     room.emit('game', game);
   }
+
   gameInit(room) {
     const { player1, player2 } = room;
 
+    player1.emit('game_init', { isPlayer1: true });
+    player2.emit('game_init', { isPlayer1: false });
     room['ball'] = {
       pos: {
         x: 0,
         y: 0,
       },
       dir: {
-        x: 1,
+        x: 0,
         y: 1,
       },
     };
@@ -65,9 +68,6 @@ export class GameEngine {
       player1: 0,
       player2: 0,
     };
-    player1.emit('game_init', { isPlayer1: true });
-    player2.emit('game_init', { isPlayer1: false });
-
     player1['paddle'] = {
       x: 0,
       y: -30,
@@ -139,6 +139,9 @@ export class GameEngine {
       ball.pos.y = 0;
       // 일정 점수 도달 시 db 저장
       if (room.score.player1 === 10) {
+        clearInterval(room['interval']);
+        player1.emit('game_over', true);
+        player2.emit('game_over', false);
         const game = this.gameRepository.create({
           player1Id: player1['ftId'],
           player2Id: player2['ftId'],
@@ -147,8 +150,10 @@ export class GameEngine {
           startTime: new Date(),
         });
         this.gameRepository.save(game);
-        clearInterval(room['interval']);
       } else if (room.score.player2 === 10) {
+        clearInterval(room['interval']);
+        player1.emit('game_over', false);
+        player2.emit('game_over', true);
         const game = this.gameRepository.create({
           player1Id: player1['ftId'],
           player2Id: player2['ftId'],
@@ -157,7 +162,6 @@ export class GameEngine {
           startTime: new Date(),
         });
         this.gameRepository.save(game);
-        clearInterval(room['interval']);
       }
     }
 
