@@ -8,6 +8,7 @@ import { LoggerMiddleware } from './middleware/logger.middleware';
 import { DummyModule } from './dummy/dummy.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { FollowModule } from './follow/follow.module';
 
 const typeOrmModuleOptions = {
   type: process.env.DB_TYPE,
@@ -31,6 +32,7 @@ const typeOrmModuleOptions = {
     TypeOrmModule.forRoot(typeOrmModuleOptions),
     AuthModule,
     UserModule,
+    FollowModule,
     DummyModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'dist', 'public'),
