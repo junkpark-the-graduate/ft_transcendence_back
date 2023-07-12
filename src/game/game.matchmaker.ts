@@ -37,16 +37,13 @@ export class GameMatchmaker {
   public matchPlayers(): [GameType, Socket, Socket] | null {
     console.log('normalPool.length: ', this.normalPool.length);
     console.log('ladderPool.length: ', this.ladderPool.length);
-
     const now: number = Date.now();
     if (this.ladderPool.length >= 2) {
       for (let i = 0; i + 1 < this.ladderPool.length; ++i) {
         const player1 = this.ladderPool[i];
         const player2 = this.ladderPool[i + 1];
-        const range1 =
-          player1['mmr'] + ((now - player1['matchTime']) / 1000) * 5;
-        const range2 =
-          player2['mmr'] - ((now - player2['matchTime']) / 1000) * 5;
+        const range1 = player1['mmr'] + (now - player1['matchTime']) / 200;
+        const range2 = player2['mmr'] - (now - player2['matchTime']) / 200;
         if (range1 >= range2) {
           this.removePlayer(player1);
           this.removePlayer(player2);

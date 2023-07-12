@@ -10,8 +10,10 @@ import {
   BALL_SPEED,
   PLANE_WIDTH,
   PLANE_HEIGHT,
+  MMR_K,
 } from './game.constants';
 import { GameEntity } from './entities/game.entity';
+import { UserService } from 'src/user/user.service';
 
 interface Game {
   paddle1: {
@@ -33,6 +35,7 @@ export class GameEngine {
   constructor(
     @InjectRepository(GameEntity)
     private readonly gameRepository: Repository<GameEntity>,
+    private userService: UserService,
   ) {}
 
   updateGame(player1, player2, room) {
@@ -50,8 +53,10 @@ export class GameEngine {
   gameInit(room) {
     const { player1, player2 } = room;
 
-    player1.emit('game_init', { isPlayer1: true });
-    player2.emit('game_init', { isPlayer1: false });
+    setTimeout(() => {
+      player1.emit('game_init', { isPlayer1: true });
+      player2.emit('game_init', { isPlayer1: false });
+    }, 1000);
     room['ball'] = {
       pos: {
         x: 0,
@@ -83,10 +88,12 @@ export class GameEngine {
   gameLoop(room: any) {
     if (room['interval']) clearInterval(room['interval']);
 
-    const interval = setInterval(() => {
-      room.emit('game', this.gameUpdate(room));
-    }, 1000 / 60);
-    room['interval'] = interval;
+    setTimeout(() => {
+      const interval = setInterval(() => {
+        room.emit('game', this.gameUpdate(room));
+      }, 1000 / 60);
+      room['interval'] = interval;
+    }, 3000);
   }
 
   movePaddleLeft(socket: Socket) {
@@ -151,6 +158,21 @@ export class GameEngine {
           startTime: new Date(),
         });
         this.gameRepository.save(game);
+        // mmr 갱신
+        if (room['type'] === 'ladder') {
+          const win_rate1 =
+            1 / (10 ** ((player2['mmr'] - player1['mmr']) / 400) + 1);
+          player1['mmr'] += MMR_K * (1 - win_rate1);
+          player2['mmr'] += MMR_K * (win_rate1 - 1);
+          this.userService.update(player1['ftId'], {
+            mmr: player1['mmr'],
+          });
+          this.userService.update(player2['ftId'], {
+            mmr: player2['mmr'],
+          });
+          console.log('player1["mmr"]: ', player1['mmr']);
+          console.log('player2["mmr"]: ', player2['mmr']);
+        }
       } else if (room.score.player2 === 10) {
         clearInterval(room['interval']);
         player1.emit('game_over', false);
@@ -163,6 +185,20 @@ export class GameEngine {
           startTime: new Date(),
         });
         this.gameRepository.save(game);
+        if (room['type'] === 'ladder') {
+          const win_rate1 =
+            1 / (10 ** ((player2['mmr'] - player1['mmr']) / 400) + 1);
+          player1['mmr'] += MMR_K * (win_rate1 - 1);
+          player2['mmr'] += MMR_K * (1 - win_rate1);
+          this.userService.update(player1['ftId'], {
+            mmr: player1['mmr'],
+          });
+          this.userService.update(player2['ftId'], {
+            mmr: player2['mmr'],
+          });
+          console.log('player1["mmr"]: ', player1['mmr']);
+          console.log('player2["mmr"]: ', player2['mmr']);
+        }
       }
     }
 

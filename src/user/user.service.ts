@@ -44,8 +44,8 @@ export class UserService {
     return user;
   }
 
-  async update(ftId: number, updateUserDto: UpdateUserDto) {
-    const { name, twoFactor } = updateUserDto;
+  async update(ftId: number, updateData: any) {
+    const { name, twoFactor, mmr } = updateData;
 
     let user = await this.userRepository.findOne({
       where: {
@@ -53,8 +53,9 @@ export class UserService {
       },
     });
 
-    user.name = name;
-    user.twoFactor = twoFactor;
+    if (name) user.name = name;
+    if (twoFactor) user.twoFactor = twoFactor;
+    if (mmr) user.mmr = mmr;
 
     user = await this.userRepository.save(user);
 

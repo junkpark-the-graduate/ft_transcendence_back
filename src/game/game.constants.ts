@@ -5,6 +5,7 @@ const BALL_SIZE = 1;
 const BALL_SPEED = 0.5;
 const PLANE_WIDTH = 50;
 const PLANE_HEIGHT = 100;
+const MMR_K = 32;
 
 export {
   PADDLE_WIDTH,
@@ -14,6 +15,8 @@ export {
   BALL_SPEED,
   PLANE_WIDTH,
   PLANE_HEIGHT,
+  // MMR 상수
+  MMR_K,
 };
 
 export enum GameType {

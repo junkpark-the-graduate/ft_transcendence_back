@@ -11,4 +11,7 @@ export class UpdateUserDto extends OmitType(CreateUserDto, [
   @IsNotEmpty()
   @ApiProperty()
   readonly twoFactor: boolean;
+
+  @IsNotEmpty()
+  readonly mmr: number;
 }
