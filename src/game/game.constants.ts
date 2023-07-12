@@ -15,3 +15,9 @@ export {
   PLANE_WIDTH,
   PLANE_HEIGHT,
 };
+
+export enum GameType {
+  NORMAL,
+  LADDER,
+  FRIENDLY,
+}

@@ -14,6 +14,7 @@ import { GameEngine } from './game.engine';
 import { JwtService } from '@nestjs/jwt';
 import { GameMatchmaker } from './game.matchmaker';
 import { UserService } from 'src/user/user.service';
+import { GameType } from './game.constants';
 
 @WebSocketGateway(4242, {
   namespace: 'game',
@@ -56,16 +57,27 @@ export class GameGateway
     this.logger.log('GameGateway initialized');
 
     const interval = setInterval(() => {
-      const players = this.gameMatchmaker.matchPlayers();
-      if (players) {
+      const match = this.gameMatchmaker.matchPlayers();
+      if (match) {
         console.log('match_found');
-        players[0].emit('match_found', 'Match found');
-        players[1].emit('match_found', 'Match found');
-        players[0].join('dummy_room');
-        players[1].join('dummy_room');
+        match[1].emit('match_found', 'Match found');
+        match[2].emit('match_found', 'Match found');
+        match[1].join('dummy_room');
+        match[2].join('dummy_room');
         const room = this.io.in('dummy_room');
-        room['player1'] = players[0];
-        room['player2'] = players[1];
+        switch (match[0]) {
+          case GameType.NORMAL:
+            room['type'] = 'normal';
+            break;
+          case GameType.LADDER:
+            room['type'] = 'ladder';
+            break;
+          case GameType.FRIENDLY:
+            room['type'] = 'frendly';
+            break;
+        }
+        room['player1'] = match[1];
+        room['player2'] = match[2];
         this.gameEngine.gameInit(room);
         this.gameEngine.gameLoop(room);
       }
@@ -89,10 +101,21 @@ export class GameGateway
     socket.leave('dummy_room');
   }
 
-  @SubscribeMessage('start_matchmaking')
-  handleStartMatchmaking(@ConnectedSocket() socket: Socket) {
+  @SubscribeMessage('normal_matching')
+  handleNormalMatching(@ConnectedSocket() socket: Socket) {
     socket['matchTime'] = Date.now();
-    this.gameMatchmaker.addPlayer(socket);
+    this.gameMatchmaker.addPlayer(GameType.NORMAL, socket);
+  }
+
+  @SubscribeMessage('ladder_matching')
+  handleLadderMatching(@ConnectedSocket() socket: Socket) {
+    socket['matchTime'] = Date.now();
+    this.gameMatchmaker.addPlayer(GameType.LADDER, socket);
+  }
+
+  @SubscribeMessage('cancel_matching')
+  handlecancelMatching(@ConnectedSocket() socket: Socket) {
+    this.gameMatchmaker.removePlayer(socket);
   }
 
   @SubscribeMessage('key_left')

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-//import { Socket } from 'socket.io';
 import { Server, Socket } from 'socket.io';
 import {
   PADDLE_WIDTH,
@@ -35,7 +34,6 @@ export class GameEngine {
     @InjectRepository(GameEntity)
     private readonly gameRepository: Repository<GameEntity>,
   ) {}
-  //private gameData: Map<string, Game> = new Map<string, Game>();
 
   updateGame(player1, player2, room) {
     const game = {
@@ -129,10 +127,13 @@ export class GameEngine {
 
     // 점수
     if (ball.pos.y <= -PLANE_HEIGHT / 2 || ball.pos.y >= PLANE_HEIGHT / 2) {
+      ball.dir.x = 0;
       if (ball.pos.y > 0) {
         room.score.player1++;
+        ball.dir.y = 1;
       } else {
         room.score.player2++;
+        ball.dir.y = -1;
       }
       room.emit('score', { score: room.score });
       ball.pos.x = 0;
@@ -145,7 +146,7 @@ export class GameEngine {
         const game = this.gameRepository.create({
           player1Id: player1['ftId'],
           player2Id: player2['ftId'],
-          gameType: 'normal',
+          gameType: room['type'],
           gameResult: 'player1',
           startTime: new Date(),
         });
@@ -157,7 +158,7 @@ export class GameEngine {
         const game = this.gameRepository.create({
           player1Id: player1['ftId'],
           player2Id: player2['ftId'],
-          gameType: 'normal',
+          gameType: room['type'],
           gameResult: 'player2',
           startTime: new Date(),
         });
@@ -178,18 +179,14 @@ export class GameEngine {
         //if (BALL_SPEED * 1.2 < PADDLE_HEIGHT) BALL_SPEED *= 1.2;
       }
     }
-
     if (
       ball.pos.x <= paddle2.x + PADDLE_WIDTH / 2 &&
       ball.pos.x >= paddle2.x - PADDLE_WIDTH / 2
     ) {
-      // and if ball is aligned with paddle on y plane
-
       if (
         ball.pos.y <= paddle2.y + PADDLE_HEIGHT / 2 &&
         ball.pos.y >= paddle2.y - PADDLE_HEIGHT / 2
       ) {
-        // ball is intersecting with the front half of the paddle
         ball.dir.x = (Math.random() - 0.5) * 2;
         ball.dir.y = -ball.dir.y;
         // if (BALL_SPEED * 1.2 < PADDLE_HEIGHT) BALL_SPEED *= 1.2;
@@ -202,16 +199,5 @@ export class GameEngine {
         pos: ball.pos,
       },
     };
-
-    // const { player1, player2, ball } = game;
-    //const paddle1 = player1['paddle'];
-    //const paddle2 = player2['paddle'];
-    //const ball = player1['ball'];
-
-    // return {
-    //   paddle1: paddle1,
-    //   paddle2: paddle2,
-    //   ball: ball,
-    // };
   }
 }
