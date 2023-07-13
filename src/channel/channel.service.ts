@@ -20,6 +20,7 @@ import { ChannelMutedMemberEntity } from './entities/channel-muted-member.entity
 import { ChannelBannedMemberEntity } from './entities/channel-banned-member.entity';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { DeleteChannelBannedMemberDto } from './dto/delete-channel-banned-member.dto';
+import { DeleteChannelMutedMemberDto } from './dto/delete-channel-muted-member.dto';
 
 @Injectable()
 export class ChannelService {
@@ -234,7 +235,12 @@ export class ChannelService {
       );
       await this.channelMutedMemberRepository.save(mutedMember);
 
-      // Todo: chat.gateway 에 접근해서 mutedMember 추가
+      this.chatGateway.addMutedMember(
+        channel.id,
+        mutedMember.userId,
+        mutedMember.mutedTime,
+        mutedMember.createdAt,
+      );
 
       return mutedMember;
     } catch (error) {
@@ -333,6 +339,42 @@ export class ChannelService {
     });
     console.log(channelBannedMembers);
     return channelBannedMembers;
+  }
+
+  async deleteChannelMutedMember(
+    userId: number,
+    deleteChannelMutedMemberDto: DeleteChannelMutedMemberDto,
+  ): Promise<ChannelMutedMemberEntity> {
+    try {
+      const user = await this.channelMemberRepository.findOne({
+        where: {
+          userId,
+          channelId: deleteChannelMutedMemberDto.channelId,
+        },
+      });
+      if (!user) throw new NotFoundException('존재하지 않는 채널 멤버입니다.');
+      if (!user.isAdmin)
+        throw new UnauthorizedException('채널 관리자가 아닙니다.');
+
+      const channelMutedMember =
+        await this.channelMutedMemberRepository.findOne({
+          where: {
+            channelId: deleteChannelMutedMemberDto.channelId,
+            userId: deleteChannelMutedMemberDto.userId,
+          },
+        });
+      if (!channelMutedMember)
+        throw new NotFoundException('존재하지 않는 채널 뮤트 멤버입니다.');
+
+      await this.channelMutedMemberRepository.delete(
+        deleteChannelMutedMemberDto,
+      );
+      return channelMutedMember;
+    } catch (error) {
+      console.log(error);
+      if (error.status) throw error;
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
   async deleteChannelBannedMember(

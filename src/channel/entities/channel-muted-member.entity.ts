@@ -33,7 +33,7 @@ export class ChannelMutedMemberEntity {
 
   @ApiProperty()
   @Column({ default: 5 }) // 분 으로 단위 통일
-  time: number;
+  mutedTime: number;
 
   @ApiProperty()
   @CreateDateColumn()

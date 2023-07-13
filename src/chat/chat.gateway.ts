@@ -19,6 +19,8 @@ import { WsJwtGuard } from 'src/auth/ws-jwt-guard.guard';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { ChannelService } from 'src/channel/channel.service';
+import { DeleteChannelMutedMemberDto } from 'src/channel/dto/delete-channel-muted-member.dto';
+import { parse } from 'path';
 // import { JwtPayload } from 'src/auth/jwt-payload.interface'; // any 타입 대신 사용할수도
 
 interface Chat {
@@ -32,6 +34,12 @@ interface User {
   id: number;
   name: string;
   image: string;
+}
+
+interface MutedMember {
+  id: number;
+  mutedTime: number;
+  createdAt: Date;
 }
 
 @WebSocketGateway(4242, {
@@ -49,8 +57,7 @@ export class ChatGateway
   private channels: {
     [channelId: string]: {
       connectedMembers: User[];
-      mutedMembers: { id: number }[];
-      bannedMembers: { id: number }[];
+      mutedMembers: MutedMember[];
     };
   } = {};
 
@@ -104,7 +111,6 @@ export class ChatGateway
         this.channels[channelId] = {
           connectedMembers: [],
           mutedMembers: [],
-          bannedMembers: [],
         };
       }
 
@@ -116,8 +122,16 @@ export class ChatGateway
 
         this.channels[channelId].mutedMembers = [
           ...channel.channelMutedMembers.map((channelMutedMember) => {
+            // muted 시간이 지난 멤버 는 추가 안하고, db에서도 삭제
+            if (!this.isMutedMember(channelId, channelMutedMember.user.id)) {
+              this.removeMutedMember(channelId, channelMutedMember.user.id);
+              return;
+            }
+
             return {
               id: channelMutedMember.user.id,
+              mutedTime: channelMutedMember.mutedTime,
+              createdAt: channelMutedMember.createdAt,
             };
           }),
         ];
@@ -156,6 +170,12 @@ export class ChatGateway
     const user = this.channels[channelId].connectedMembers.find(
       (user) => user.id === userId,
     );
+
+    if (this.isMutedMember(channelId, userId)) {
+      socket.emit('muted');
+      return;
+    }
+
     socket.to(channelId).emit('new_chat', {
       username: user.name,
       message: chat.message,
@@ -164,16 +184,6 @@ export class ChatGateway
   }
 
   public async kickMember(channelId: number, userId: number) {
-    // channel.service 에서 해야함
-    // const channel = await this.channelService.findOne(channelId);
-    // if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
-
-    // const channelMember = await this.channelService.findOneChannelMember(
-    //   channelId,
-    //   userId,
-    // );
-    // if (!channelMember) throw new NotFoundException('채널 멤버가 아닙니다');
-
     const user = this.channels[channelId].connectedMembers.find(
       (user) => user.id === userId,
     );
@@ -186,5 +196,58 @@ export class ChatGateway
       ].connectedMembers.filter((user) => user.id !== userId);
       this.logger.log(`kicked : ${user.socket.id} ${channelId}`);
     }
+  }
+
+  public addMutedMember(
+    channelId: number,
+    userId: number,
+    mutedTime: number,
+    createdAt: Date,
+  ) {
+    const channel = this.channels[channelId.toString()];
+    let mutedMember = channel.mutedMembers.find(
+      (member) => member.id === userId,
+    );
+
+    if (!mutedMember) {
+      mutedMember = { id: userId, mutedTime, createdAt };
+      channel.mutedMembers.push(mutedMember);
+    } else {
+      mutedMember.createdAt = createdAt;
+    }
+  }
+
+  private isMutedMember(channelId: string, userId: number): boolean {
+    const mutedMember = this.channels[channelId].mutedMembers.find(
+      (member) => member.id === userId,
+    );
+
+    if (!mutedMember) return false;
+
+    const mutedTime: number = mutedMember.mutedTime;
+    const createdAt: Date = mutedMember.createdAt;
+    const now: Date = new Date();
+    const diff: number = now.getTime() - createdAt.getTime();
+
+    if (diff >= mutedTime) {
+      this.removeMutedMember(channelId, userId);
+      return false;
+    }
+    return true;
+  }
+
+  private removeMutedMember(channelId: string, userId: number) {
+    const deleteChannelMutedMemberDto: DeleteChannelMutedMemberDto = {
+      channelId: parseInt(channelId),
+      userId,
+    };
+    this.channelService.deleteChannelMutedMember(
+      userId,
+      deleteChannelMutedMemberDto,
+    );
+
+    this.channels[channelId].mutedMembers = this.channels[
+      channelId
+    ].mutedMembers.filter((member) => member.id !== userId);
   }
 }
