@@ -35,6 +35,6 @@ export class FollowController {
   @Get(':userId')
   async getFollowingsByUser(@Param('userId') userId: number) {
     const followings = await this.followService.getFollowingsByUser(userId);
-    return { followings };
+    return followings;
   }
 }
