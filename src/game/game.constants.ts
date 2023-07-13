@@ -5,6 +5,7 @@ const BALL_SIZE = 1;
 const BALL_SPEED = 0.5;
 const PLANE_WIDTH = 50;
 const PLANE_HEIGHT = 100;
+const WIN_SCORE = 10;
 const MMR_K = 32;
 
 export {
@@ -15,6 +16,7 @@ export {
   BALL_SPEED,
   PLANE_WIDTH,
   PLANE_HEIGHT,
+  WIN_SCORE,
   // MMR 상수
   MMR_K,
 };

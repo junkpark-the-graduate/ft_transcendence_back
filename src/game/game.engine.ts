@@ -10,6 +10,7 @@ import {
   BALL_SPEED,
   PLANE_WIDTH,
   PLANE_HEIGHT,
+  WIN_SCORE,
   MMR_K,
 } from './game.constants';
 import { GameEntity } from './entities/game.entity';
@@ -146,7 +147,7 @@ export class GameEngine {
       ball.pos.x = 0;
       ball.pos.y = 0;
       // 일정 점수 도달 시 db 저장
-      if (room.score.player1 === 10) {
+      if (room.score.player1 === WIN_SCORE) {
         clearInterval(room['interval']);
         player1.emit('game_over', true);
         player2.emit('game_over', false);
@@ -173,7 +174,9 @@ export class GameEngine {
           console.log('player1["mmr"]: ', player1['mmr']);
           console.log('player2["mmr"]: ', player2['mmr']);
         }
-      } else if (room.score.player2 === 10) {
+        player1.leave('dummy_room');
+        player2.leave('dummy_room');
+      } else if (room.score.player2 === WIN_SCORE) {
         clearInterval(room['interval']);
         player1.emit('game_over', false);
         player2.emit('game_over', true);
@@ -199,6 +202,8 @@ export class GameEngine {
           console.log('player1["mmr"]: ', player1['mmr']);
           console.log('player2["mmr"]: ', player2['mmr']);
         }
+        player1.leave('dummy_room');
+        player2.leave('dummy_room');
       }
     }
 
