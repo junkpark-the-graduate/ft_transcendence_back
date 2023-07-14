@@ -267,13 +267,6 @@ export class ChannelService {
       });
       if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
 
-      // const admin = channel.channelMembers.find(
-      //   (member) => member.userId === userId,
-      // );
-      // if (!admin) throw new NotFoundException('채널 멤버가 아닙니다.');
-      // if (!admin.isAdmin)
-      //   throw new UnauthorizedException('채널 관리자가 아닙니다');
-
       const mutedMember = channel.channelMutedMembers.find(
         (member) => member.userId === userId,
       );
@@ -284,7 +277,6 @@ export class ChannelService {
         channelId: channelId,
         userId: userId,
       });
-      // this.chatGateway.removeMutedMember(channelId, userId);
 
       return mutedMember;
     } catch (error) {
@@ -470,5 +462,34 @@ export class ChannelService {
       throw new UnauthorizedException('채널 관리자가 아닙니다.');
 
     return true;
+  }
+
+  async updateChannelAdmin(
+    userId: number,
+    channelId: number,
+    memberId: number,
+  ) {
+    const channel = await this.channelRepository.findOne({
+      where: {
+        id: channelId,
+      },
+      relations: {
+        user: true,
+        channelMembers: true,
+      },
+    });
+
+    if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
+    if (channel.ownerId !== userId)
+      throw new UnauthorizedException('채널 관리자가 아닙니다.');
+
+    const member = channel.channelMembers.find(
+      (member) => member.userId === memberId,
+    );
+    if (!member) throw new NotFoundException('존재하지 않는 채널 멤버입니다.');
+
+    member.isAdmin = true;
+    await this.channelMemberRepository.save(member);
+    return member;
   }
 }

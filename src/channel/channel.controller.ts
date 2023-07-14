@@ -18,9 +18,13 @@ import { CreateChannelMutedMemberDto } from './dto/create-channel-muted-member.d
 import { CreateChannelBannedMemberDto } from './dto/create-channel-banned-member.dto';
 import { DeleteChannelBannedMemberDto } from './dto/delete-channel-banned-member.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiCreatedResponse, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { ChannelEntity } from './entities/channel.entity';
-import { get } from 'http';
 
 @Controller('channel')
 export class ChannelController {
@@ -30,7 +34,7 @@ export class ChannelController {
   @Post()
   @ApiOperation({ summary: '채널 생성 API', description: '채널을 생성' })
   @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
-  @ApiResponse({ status: 200, description: 'OK' })
+  @ApiResponse({ status: 201, description: 'Created' })
   create(@Request() req, @Body() createChannelDto: CreateChannelDto) {
     console.log('!!!!!!!!!!!!!!11');
     console.log('req.user.id', req.user.id);
@@ -58,7 +62,7 @@ export class ChannelController {
   @UseGuards(AuthGuard('jwt'))
   @Post(':channelId/member')
   @ApiOperation({ summary: '채널 참여', description: '채널 참여' })
-  @ApiResponse({ status: 200, description: 'OK' })
+  @ApiResponse({ status: 201, description: 'Created' })
   join(@Request() req, @Param('channelId') channelId: number) {
     const createChannelMemberDto: CreateChannelMemberDto = {
       channelId,
@@ -71,7 +75,7 @@ export class ChannelController {
   @UseGuards(AuthGuard('jwt'))
   @Post(':channelId/muted-member')
   @ApiOperation({ summary: '멤버 뮤트', description: 'time만큼 뮤트' })
-  @ApiResponse({ status: 200, description: 'OK' })
+  @ApiResponse({ status: 201, description: 'Created' })
   mute(
     @Request() req,
     @Param('channelId') channelId: number,
@@ -91,7 +95,7 @@ export class ChannelController {
     summary: '멤버 차단(ban)',
     description: '채널에서 쫓겨나고 해당 채널에 다시 들어올 수 없음',
   })
-  @ApiResponse({ status: 200, description: 'OK' })
+  @ApiResponse({ status: 201, description: 'Created' })
   ban(
     @Request() req,
     @Param('channelId') channelId: number,
@@ -176,7 +180,26 @@ export class ChannelController {
     description: '채널 관리자 조회',
   })
   @ApiResponse({ status: 200, description: 'OK' })
-  checkchannelAdmin(@Request() req, @Param('channelId') channelId: number) {
+  checkChannelAdmin(@Request() req, @Param('channelId') channelId: number) {
     return this.channelService.checkChannelAdmin(req.user.id, channelId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch(':channelId/admin')
+  @ApiOperation({
+    summary: '채널 관리자 추가 API',
+    description: '채널 관리자 추가',
+  })
+  @ApiResponse({ status: 200, description: 'OK' })
+  updateChannelAdmin(
+    @Request() req,
+    @Param('channelId') channelId: number,
+    @Query('memberId') memberId: number,
+  ) {
+    return this.channelService.updateChannelAdmin(
+      req.user.id,
+      channelId,
+      memberId,
+    );
   }
 }
