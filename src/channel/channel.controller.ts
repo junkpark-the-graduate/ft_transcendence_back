@@ -60,6 +60,15 @@ export class ChannelController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Get(':channelId')
+  @ApiOperation({ summary: '채널 조회 API', description: '채널 1개 조회' })
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  @ApiResponse({ status: 200, description: 'OK' })
+  findOne(@Param('channelId') channelId: number) {
+    return this.channelService.findOne(channelId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Post(':channelId/member')
   @ApiOperation({ summary: '채널 참여', description: '채널 참여' })
   @ApiResponse({ status: 201, description: 'Created' })
