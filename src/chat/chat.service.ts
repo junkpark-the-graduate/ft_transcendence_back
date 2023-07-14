@@ -41,13 +41,13 @@ export class ChatService {
     [channelId: string]: Channel;
   } = {};
 
-  public removeConnectedMember(channelId: string, userId: number) {
+  removeConnectedMember(channelId: string, userId: number) {
     this.channels[channelId].connectedMembers = this.channels[
       channelId
     ].connectedMembers.filter((user) => user.id !== userId);
   }
 
-  public async initChannels(channelId: string) {
+  async initChannels(channelId: string) {
     const channel = await this.channelService.findOne(channelId);
     if (!channel) throw new NotFoundException('채널이 존재하지 않습니다.');
 
@@ -76,11 +76,7 @@ export class ChatService {
     });
   }
 
-  public async addConnectedMember(
-    channelId: string,
-    userId: number,
-    socket: Socket,
-  ) {
+  async addConnectedMember(channelId: string, userId: number, socket: Socket) {
     const member = await this.channelService.findOneChannelMember(
       channelId,
       userId,
@@ -96,13 +92,13 @@ export class ChatService {
     });
   }
 
-  public getMemberInChannel(channelId: string, userId: number) {
+  getMemberInChannel(channelId: string, userId: number) {
     return this.channels[channelId].connectedMembers.find(
       (user) => user.id === userId,
     );
   }
 
-  public addMutedMember(
+  addMutedMember(
     channelId: number,
     userId: number,
     mutedTime: number,
@@ -121,7 +117,7 @@ export class ChatService {
     }
   }
 
-  public isMutedMember(channelId: string, userId: number): boolean {
+  isMutedMember(channelId: string, userId: number): boolean {
     const mutedMember = this.channels[channelId].mutedMembers.find(
       (member) => member.id === userId,
     );
@@ -133,7 +129,7 @@ export class ChatService {
     return true;
   }
 
-  public isExpiredMutedTime(mutedMember): boolean {
+  isExpiredMutedTime(mutedMember): boolean {
     const mutedTime: number = mutedMember.mutedTime * 60000; // Convert mutedTime to milliseconds
     const createdAt: Date = mutedMember.createdAt;
     const now: Date = new Date();
@@ -145,7 +141,7 @@ export class ChatService {
     return false;
   }
 
-  public removeMutedMember(channelId: string, userId: number) {
+  removeMutedMember(channelId: string, userId: number) {
     this.channelService.unmute(parseInt(channelId), userId);
 
     this.channels[channelId].mutedMembers = this.channels[
