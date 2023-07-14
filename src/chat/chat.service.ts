@@ -12,12 +12,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ChannelService } from 'src/channel/channel.service';
 import { Socket } from 'socket.io';
 
-// interface Chat {
-//   username: string;
-//   message: string;
-//   socketId: string;
-// }
-
 interface User {
   socket: Socket;
   id: number;
@@ -108,12 +102,6 @@ export class ChatService {
     );
   }
 
-  public removeMutedMemberIfNotMuted(channelId: string, userId: number) {
-    if (!this.isMutedMember(channelId, userId)) {
-      this.removeMutedMember(channelId, userId);
-    }
-  }
-
   public addMutedMember(
     channelId: number,
     userId: number,
@@ -137,21 +125,24 @@ export class ChatService {
     const mutedMember = this.channels[channelId].mutedMembers.find(
       (member) => member.id === userId,
     );
-    console.log('mutedMember', mutedMember);
-
     if (!mutedMember) return false;
+    if (this.isExpiredMutedTime(mutedMember)) {
+      this.removeMutedMember(channelId, userId);
+      return false;
+    }
+    return true;
+  }
 
+  public isExpiredMutedTime(mutedMember): boolean {
     const mutedTime: number = mutedMember.mutedTime * 60000; // Convert mutedTime to milliseconds
     const createdAt: Date = mutedMember.createdAt;
     const now: Date = new Date();
     const diff: number = now.getTime() - createdAt.getTime();
 
-    console.log('diff', diff);
-    console.log('mutedTime', mutedTime);
-
+    // TODO: 원상복구 꼭하기
     //if (diff >= mutedTime)
-    if (diff >= 0.25 * 60000) return false;
-    return true;
+    if (diff >= 0.25 * 60000) return true;
+    return false;
   }
 
   public removeMutedMember(channelId: string, userId: number) {

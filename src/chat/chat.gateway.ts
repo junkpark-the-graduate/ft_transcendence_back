@@ -106,7 +106,10 @@ export class ChatGateway
 
     const member = this.chatService.getMemberInChannel(channelId, userId);
 
-    this.chatService.removeMutedMemberIfNotMuted(channelId, userId);
+    if (this.chatService.isMutedMember(channelId, userId)) {
+      socket.emit('muted');
+      return;
+    }
 
     socket.to(channelId).emit('new_chat', {
       userId: member.id,
