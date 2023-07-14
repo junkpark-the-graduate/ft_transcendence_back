@@ -21,6 +21,7 @@ import { ChannelBannedMemberEntity } from './entities/channel-banned-member.enti
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { DeleteChannelBannedMemberDto } from './dto/delete-channel-banned-member.dto';
 import { DeleteChannelMutedMemberDto } from './dto/delete-channel-muted-member.dto';
+import { ChatService } from 'src/chat/chat.service';
 
 @Injectable()
 export class ChannelService {
@@ -39,6 +40,9 @@ export class ChannelService {
 
     @Inject(forwardRef(() => ChatGateway))
     private readonly chatGateway: ChatGateway,
+
+    @Inject(forwardRef(() => ChatService))
+    private readonly chatService: ChatService,
   ) {}
 
   async create(createChannelDto: CreateChannelDto, ownerId: number) {
@@ -235,12 +239,52 @@ export class ChannelService {
       );
       await this.channelMutedMemberRepository.save(mutedMember);
 
-      this.chatGateway.addMutedMember(
+      this.chatService.addMutedMember(
         channel.id,
         mutedMember.userId,
         mutedMember.mutedTime,
         mutedMember.createdAt,
       );
+
+      return mutedMember;
+    } catch (error) {
+      console.log(error);
+      if (error.status) throw error;
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async unmute(channelId: number, userId: number) {
+    try {
+      const channel = await this.channelRepository.findOne({
+        where: {
+          id: channelId,
+        },
+        relations: {
+          channelMembers: true,
+          channelMutedMembers: true,
+        },
+      });
+      if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
+
+      // const admin = channel.channelMembers.find(
+      //   (member) => member.userId === userId,
+      // );
+      // if (!admin) throw new NotFoundException('채널 멤버가 아닙니다.');
+      // if (!admin.isAdmin)
+      //   throw new UnauthorizedException('채널 관리자가 아닙니다');
+
+      const mutedMember = channel.channelMutedMembers.find(
+        (member) => member.userId === userId,
+      );
+      if (!mutedMember)
+        throw new NotFoundException('채널 뮤트 멤버가 아닙니다.');
+
+      await this.channelMutedMemberRepository.delete({
+        channelId: channelId,
+        userId: userId,
+      });
+      // this.chatGateway.removeMutedMember(channelId, userId);
 
       return mutedMember;
     } catch (error) {
