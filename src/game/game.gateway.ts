@@ -15,6 +15,7 @@ import { JwtService } from '@nestjs/jwt';
 import { GameMatchmaker } from './game.matchmaker';
 import { UserService } from 'src/user/user.service';
 import { GameType } from './game.constants';
+import { v4 } from 'uuid';
 
 @WebSocketGateway(4242, {
   namespace: 'game',
@@ -60,11 +61,13 @@ export class GameGateway
       const match = this.gameMatchmaker.matchPlayers();
       if (match) {
         console.log('match_found');
+        const roomName = v4();
         match[1].emit('match_found', 'Match found');
         match[2].emit('match_found', 'Match found');
-        match[1].join('dummy_room');
-        match[2].join('dummy_room');
-        const room = this.io.in('dummy_room');
+
+        match[1].join(roomName);
+        match[2].join(roomName);
+        const room = this.io.in(roomName);
         switch (match[0]) {
           case GameType.NORMAL:
             room['type'] = 'normal';
@@ -98,7 +101,6 @@ export class GameGateway
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     this.logger.log(`Client disconnected: ${socket.id}`);
-    socket.leave('dummy_room');
   }
 
   @SubscribeMessage('normal_matching')

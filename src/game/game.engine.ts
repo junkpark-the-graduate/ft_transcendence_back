@@ -132,9 +132,12 @@ export class GameEngine {
     const { winner, loser } = result;
 
     // Elo system
-    const win_rate1 = 1 / (10 ** ((loser['mmr'] - winner['mmr']) / 400) + 1);
-    winner['mmr'] += MMR_K * (1 - win_rate1);
-    loser['mmr'] += MMR_K * (win_rate1 - 1);
+    const winner_rate = 1 / (10 ** ((loser['mmr'] - winner['mmr']) / 400) + 1);
+    winner['mmr'] += MMR_K * (1 - winner_rate);
+    loser['mmr'] -= MMR_K * winner_rate;
+
+    console.log('winner', MMR_K * (1 - winner_rate));
+    console.log('loser', -MMR_K * winner_rate);
     this.userService.update(winner['ftId'], {
       mmr: Math.round(winner['mmr']),
     });
@@ -163,8 +166,7 @@ export class GameEngine {
     if (room['type'] === 'ladder') {
       this.updateMmr(result);
     }
-    player1.leave('dummy_room');
-    player2.leave('dummy_room');
+    room.disconnectSockets(true);
   }
 
   private checkBoundaryCollision(room: any, ball: any) {
