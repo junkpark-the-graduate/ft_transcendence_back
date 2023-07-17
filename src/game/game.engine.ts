@@ -54,6 +54,7 @@ export class GameEngine {
   gameInit(room) {
     const { player1, player2 } = room;
 
+    room['startTime'] = new Date();
     setTimeout(() => {
       player1.emit('game_init', { isPlayer1: true });
       player2.emit('game_init', { isPlayer1: false });
@@ -116,24 +117,60 @@ export class GameEngine {
     }
   }
 
-  gameUpdate(room) {
-    const { player1, player2, ball } = room;
-    const paddle1 = player1['paddle'];
-    const paddle2 = player2['paddle'];
+  private getResult(room: any) {
+    const { player1, player2 } = room;
 
-    ball.pos.x += ball.dir.x * BALL_SPEED;
-    ball.pos.y += ball.dir.y * BALL_SPEED;
-    // paddle2.position.x = ball.pos.x;
+    if (room.score.player1 === WIN_SCORE) {
+      return { winner: player1, loser: player2 };
+    } else if (room.score.player2 === WIN_SCORE) {
+      return { winner: player2, loser: player1 };
+    }
+    return null;
+  }
 
-    // 1인칭
-    // camera.position.x = paddle1.position.x;
+  private updateMmr(result: any) {
+    const { winner, loser } = result;
 
-    // 벽
+    // Elo system
+    const win_rate1 = 1 / (10 ** ((loser['mmr'] - winner['mmr']) / 400) + 1);
+    winner['mmr'] += MMR_K * (1 - win_rate1);
+    loser['mmr'] += MMR_K * (win_rate1 - 1);
+    this.userService.update(winner['ftId'], {
+      mmr: Math.round(winner['mmr']),
+    });
+    this.userService.update(loser['ftId'], {
+      mmr: Math.round(loser['mmr']),
+    });
+  }
+
+  private endGame(room: any, result: any) {
+    const { player1, player2 } = room;
+    const { winner, loser } = result;
+
+    clearInterval(room['interval']);
+    const game = this.gameRepository.create({
+      player1Id: player1['ftId'],
+      player2Id: player2['ftId'],
+      gameType: room['type'],
+      gameResult: winner === player1 ? 'player1' : 'player2',
+      startTime: room['startTime'],
+    });
+    this.gameRepository.save(game);
+
+    winner.emit('game_over', true);
+    loser.emit('game_over', false);
+
+    if (room['type'] === 'ladder') {
+      this.updateMmr(result);
+    }
+    player1.leave('dummy_room');
+    player2.leave('dummy_room');
+  }
+
+  private checkBoundaryCollision(room: any, ball: any) {
     if (ball.pos.x <= -PLANE_WIDTH / 2 || ball.pos.x >= PLANE_WIDTH / 2) {
       ball.dir.x = -ball.dir.x;
     }
-
-    // 점수
     if (ball.pos.y <= -PLANE_HEIGHT / 2 || ball.pos.y >= PLANE_HEIGHT / 2) {
       ball.dir.x = 0;
       if (ball.pos.y > 0) {
@@ -146,96 +183,44 @@ export class GameEngine {
       room.emit('score', { score: room.score });
       ball.pos.x = 0;
       ball.pos.y = 0;
-      // 일정 점수 도달 시 db 저장
-      if (room.score.player1 === WIN_SCORE) {
-        clearInterval(room['interval']);
-        player1.emit('game_over', true);
-        player2.emit('game_over', false);
-        const game = this.gameRepository.create({
-          player1Id: player1['ftId'],
-          player2Id: player2['ftId'],
-          gameType: room['type'],
-          gameResult: 'player1',
-          startTime: new Date(),
-        });
-        this.gameRepository.save(game);
-        // mmr 갱신
-        if (room['type'] === 'ladder') {
-          const win_rate1 =
-            1 / (10 ** ((player2['mmr'] - player1['mmr']) / 400) + 1);
-          player1['mmr'] += MMR_K * (1 - win_rate1);
-          player2['mmr'] += MMR_K * (win_rate1 - 1);
-          this.userService.update(player1['ftId'], {
-            mmr: player1['mmr'],
-          });
-          this.userService.update(player2['ftId'], {
-            mmr: player2['mmr'],
-          });
-          console.log('player1["mmr"]: ', player1['mmr']);
-          console.log('player2["mmr"]: ', player2['mmr']);
-        }
-        player1.leave('dummy_room');
-        player2.leave('dummy_room');
-      } else if (room.score.player2 === WIN_SCORE) {
-        clearInterval(room['interval']);
-        player1.emit('game_over', false);
-        player2.emit('game_over', true);
-        const game = this.gameRepository.create({
-          player1Id: player1['ftId'],
-          player2Id: player2['ftId'],
-          gameType: room['type'],
-          gameResult: 'player2',
-          startTime: new Date(),
-        });
-        this.gameRepository.save(game);
-        if (room['type'] === 'ladder') {
-          const win_rate1 =
-            1 / (10 ** ((player2['mmr'] - player1['mmr']) / 400) + 1);
-          player1['mmr'] += MMR_K * (win_rate1 - 1);
-          player2['mmr'] += MMR_K * (1 - win_rate1);
-          this.userService.update(player1['ftId'], {
-            mmr: player1['mmr'],
-          });
-          this.userService.update(player2['ftId'], {
-            mmr: player2['mmr'],
-          });
-          console.log('player1["mmr"]: ', player1['mmr']);
-          console.log('player2["mmr"]: ', player2['mmr']);
-        }
-        player1.leave('dummy_room');
-        player2.leave('dummy_room');
-      }
-    }
 
-    if (
-      ball.pos.x <= paddle1.x + PADDLE_WIDTH / 2 &&
-      ball.pos.x >= paddle1.x - PADDLE_WIDTH / 2
-    ) {
-      if (
-        ball.pos.y <= paddle1.y + PADDLE_HEIGHT / 2 &&
-        ball.pos.y >= paddle1.y - PADDLE_HEIGHT / 2
-      ) {
-        ball.dir.x = (Math.random() - 0.5) * 2;
-        ball.dir.y = -ball.dir.y;
-        //if (BALL_SPEED * 1.2 < PADDLE_HEIGHT) BALL_SPEED *= 1.2;
+      const result = this.getResult(room);
+      if (result) {
+        this.endGame(room, result);
       }
     }
+  }
+
+  private checkPaddleCollision(ball: any, paddle: any) {
     if (
-      ball.pos.x <= paddle2.x + PADDLE_WIDTH / 2 &&
-      ball.pos.x >= paddle2.x - PADDLE_WIDTH / 2
+      ball.pos.x <= paddle.x + PADDLE_WIDTH / 2 &&
+      ball.pos.x >= paddle.x - PADDLE_WIDTH / 2
     ) {
       if (
-        ball.pos.y <= paddle2.y + PADDLE_HEIGHT / 2 &&
-        ball.pos.y >= paddle2.y - PADDLE_HEIGHT / 2
+        ball.pos.y <= paddle.y + PADDLE_HEIGHT / 2 &&
+        ball.pos.y >= paddle.y - PADDLE_HEIGHT / 2
       ) {
         ball.dir.x = (Math.random() - 0.5) * 2;
         ball.dir.y = -ball.dir.y;
         // if (BALL_SPEED * 1.2 < PADDLE_HEIGHT) BALL_SPEED *= 1.2;
       }
     }
+  }
+
+  private gameUpdate(room: any) {
+    const { player1, player2, ball } = room;
+    const paddle1 = player1['paddle'];
+    const paddle2 = player2['paddle'];
+
+    ball.pos.x += ball.dir.x * BALL_SPEED;
+    ball.pos.y += ball.dir.y * BALL_SPEED;
+    this.checkBoundaryCollision(room, ball);
+    this.checkPaddleCollision(ball, paddle1);
+    this.checkPaddleCollision(ball, paddle2);
+
     return {
-      paddle1: player1['paddle'],
-      paddle2: player2['paddle'],
+      paddle1: paddle1,
+      paddle2: paddle2,
       ball: {
         pos: ball.pos,
       },
