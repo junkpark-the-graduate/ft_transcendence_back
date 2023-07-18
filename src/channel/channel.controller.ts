@@ -119,6 +119,21 @@ export class ChannelController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @Delete(':channelId/kicked-member')
+  @ApiOperation({
+    summary: '멤버 쫓아내기',
+    description: '관리자에 의해 채널에서 멤버를 쫓아냄. 채널 소유자는 쫓아낼 수 없음',
+  })
+  @ApiResponse({ status: 200, description: 'Ok' })
+  kick(
+    @Request() req,
+    @Param('channelId') channelId: number,
+    @Query('memberId') memberId: number,
+  ) {
+    return this.channelService.kick(req.user.id, channelId, memberId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
   @Get(':channelId/member')
   @ApiOperation({
     summary: '채널 멤버 조회 API',
