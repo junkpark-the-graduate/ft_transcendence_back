@@ -33,17 +33,16 @@ import { v4 } from 'uuid';
 //interface PlayerData {
 //  ftId: number;
 //  mmr: number;
-//  matchTime: number;
 //  isPlayer1: boolean;
 //  paddle: {x: number, y: number}
 //}
 export class GameGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  //private waitingQueue: Socket[] = [];
-
   @WebSocketServer() io: Server;
   private logger = new Logger('GameGateway');
+
+  private disconnectedUserMap = new Map<number, any>();
 
   constructor(
     private gameEngine: GameEngine,
@@ -56,19 +55,27 @@ export class GameGateway
 
   afterInit(server: any) {
     this.logger.log('GameGateway initialized');
+    // TODO 둘 다 튕겼을 때
+    //this.io.adapter['on']('delete-room', (room) => {
+    //  console.log(`room ${room} was delete`);
+    //});
 
     const interval = setInterval(() => {
       const match = this.gameMatchmaker.matchPlayers();
+      console.log('rooms: ', this.io.adapter['rooms']);
       if (match) {
+        const { gameType, player1, player2 } = match;
         console.log('match_found');
         const roomName = v4();
-        match[1].emit('match_found', 'Match found');
-        match[2].emit('match_found', 'Match found');
-
-        match[1].join(roomName);
-        match[2].join(roomName);
+        player1.emit('match_found', 'Match found');
+        player2.emit('match_found', 'Match found');
+        player1.join(roomName);
+        player2.join(roomName);
         const room = this.io.in(roomName);
-        switch (match[0]) {
+        room['roomName'] = roomName;
+        player1['room'] = room;
+        player2['room'] = room;
+        switch (gameType) {
           case GameType.NORMAL:
             room['type'] = 'normal';
             break;
@@ -79,8 +86,8 @@ export class GameGateway
             room['type'] = 'frendly';
             break;
         }
-        room['player1'] = match[1];
-        room['player2'] = match[2];
+        room['player1'] = player1;
+        room['player2'] = player2;
         this.gameEngine.gameInit(room);
         this.gameEngine.gameLoop(room);
       }
@@ -91,16 +98,43 @@ export class GameGateway
     this.logger.log(`Client connected: ${socket.id}`);
     const accessToken = socket.handshake.query.accessToken as string;
     try {
-      const decoded = this.jwtService.verify(accessToken);
-      socket['ftId'] = decoded['sub'];
+      const ftId: number = this.jwtService.verify(accessToken)['sub'];
+      socket['ftId'] = ftId;
       socket['mmr'] = (await this.userService.findOne(socket['ftId']))['mmr'];
     } catch (error) {
+      console.log('handleConnection error: ', error);
       socket.disconnect();
     }
   }
 
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     this.logger.log(`Client disconnected: ${socket.id}`);
+    const room = socket['room'];
+    if (room) {
+      this.disconnectedUserMap.set(socket['ftId'], socket['room']);
+    }
+  }
+
+  @SubscribeMessage('reconnect')
+  handleReconnect(@ConnectedSocket() socket: Socket) {
+    const ftId = socket['ftId'];
+    const room = this.disconnectedUserMap.get(ftId);
+    // 튕긴 유저 재접속
+    if (room) {
+      console.log('room: ', room);
+      socket.emit('reconnection');
+      this.disconnectedUserMap.delete(ftId);
+      socket.join(room['roomName']);
+      const disconnectSocket =
+        room['player1'].ftId === ftId ? room['player1'] : room['player2'];
+      const isPlayer1: boolean = disconnectSocket.isPlayer1;
+      socket['room'] = room;
+      socket['paddle'] = disconnectSocket.paddle;
+      socket['isPlayer1'] = isPlayer1;
+      isPlayer1 ? (room['player1'] = socket) : (room['player2'] = socket);
+      return true;
+    }
+    return false;
   }
 
   @SubscribeMessage('normal_matching')
@@ -115,24 +149,23 @@ export class GameGateway
     this.gameMatchmaker.addPlayer(GameType.LADDER, socket);
   }
 
+  @SubscribeMessage('game_init')
+  handleGameInit(@ConnectedSocket() socket: Socket) {
+    return socket['isPlayer1'];
+  }
+
   @SubscribeMessage('cancel_matching')
   handlecancelMatching(@ConnectedSocket() socket: Socket) {
     this.gameMatchmaker.removePlayer(socket);
   }
 
   @SubscribeMessage('key_left')
-  handleHello(
-    @ConnectedSocket() socket: Socket,
-    //@MessageBody('isPlayer1') isPlayer1: boolean,
-  ) {
+  handleKeyLeft(@ConnectedSocket() socket: Socket) {
     this.gameEngine.movePaddleLeft(socket);
   }
 
   @SubscribeMessage('key_right')
-  handleKeyRight(
-    @ConnectedSocket() socket: Socket,
-    //@MessageBody('isPlayer1') isPlayer1,
-  ) {
+  handleKeyRight(@ConnectedSocket() socket: Socket) {
     this.gameEngine.movePaddleRight(socket);
   }
 }

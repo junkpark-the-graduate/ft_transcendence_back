@@ -39,26 +39,10 @@ export class GameEngine {
     private userService: UserService,
   ) {}
 
-  updateGame(player1, player2, room) {
-    const game = {
-      paddle1: player1['paddle'],
-      paddle2: player2['paddle'],
-      ball: {
-        x: 0,
-        y: 0,
-      },
-    };
-    room.emit('game', game);
-  }
-
   gameInit(room) {
     const { player1, player2 } = room;
 
     room['startTime'] = new Date();
-    setTimeout(() => {
-      player1.emit('game_init', { isPlayer1: true });
-      player2.emit('game_init', { isPlayer1: false });
-    }, 1000);
     room['ball'] = {
       pos: {
         x: 0,
@@ -88,14 +72,10 @@ export class GameEngine {
   }
 
   gameLoop(room: any) {
-    if (room['interval']) clearInterval(room['interval']);
-
-    setTimeout(() => {
-      const interval = setInterval(() => {
-        room.emit('game', this.gameUpdate(room));
-      }, 1000 / 60);
-      room['interval'] = interval;
-    }, 3000);
+    const interval = setInterval(() => {
+      room.emit('game', this.gameUpdate(room));
+    }, 1000 / 60);
+    room['interval'] = interval;
   }
 
   movePaddleLeft(socket: Socket) {
@@ -134,10 +114,9 @@ export class GameEngine {
     // Elo system
     const winner_rate = 1 / (10 ** ((loser['mmr'] - winner['mmr']) / 400) + 1);
     winner['mmr'] += MMR_K * (1 - winner_rate);
-    loser['mmr'] -= MMR_K * winner_rate;
+    loser['mmr'] -= MMR_K * (1 - winner_rate);
 
-    console.log('winner', MMR_K * (1 - winner_rate));
-    console.log('loser', -MMR_K * winner_rate);
+    console.log('change rate', MMR_K * (1 - winner_rate));
     this.userService.update(winner['ftId'], {
       mmr: Math.round(winner['mmr']),
     });
@@ -166,6 +145,8 @@ export class GameEngine {
     if (room['type'] === 'ladder') {
       this.updateMmr(result);
     }
+    player1['room'] = null;
+    player2['room'] = null;
     room.disconnectSockets(true);
   }
 

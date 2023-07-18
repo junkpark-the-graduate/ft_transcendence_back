@@ -2,6 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { GameType } from './game.constants';
 
+interface Match {
+  gameType: GameType;
+  player1: Socket;
+  player2: Socket;
+}
+
 @Injectable()
 export class GameMatchmaker {
   private normalPool: Socket[] = [];
@@ -33,9 +39,7 @@ export class GameMatchmaker {
     }
   }
 
-  private matchPlayersByGameType(
-    gameType: GameType,
-  ): [GameType, Socket, Socket] | null {
+  private matchPlayersByGameType(gameType: GameType): Match | null {
     const pool =
       gameType === GameType.LADDER ? this.ladderPool : this.normalPool;
     const now: number = Date.now();
@@ -48,13 +52,13 @@ export class GameMatchmaker {
       if (range1 >= range2) {
         this.removePlayer(player1);
         this.removePlayer(player2);
-        return [gameType, player1, player2];
+        return { gameType, player1, player2 };
       }
     }
     return null;
   }
 
-  public matchPlayers(): [GameType, Socket, Socket] | null {
+  public matchPlayers(): Match | null {
     console.log('normalPool.length: ', this.normalPool.length);
     console.log('ladderPool.length: ', this.ladderPool.length);
     if (this.ladderPool.length >= 2) {
