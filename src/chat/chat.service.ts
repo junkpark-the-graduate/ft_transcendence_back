@@ -9,8 +9,9 @@ import {
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ChannelService } from 'src/channel/channel.service';
+import { ChannelService } from 'src/channel/services/channel.service';
 import { Socket } from 'socket.io';
+import { ChannelMuteService } from 'src/channel/services/channel-mute.service';
 
 interface User {
   socket: Socket;
@@ -35,6 +36,7 @@ export class ChatService {
   constructor(
     @Inject(forwardRef(() => ChannelService))
     private channelService: ChannelService,
+    private channelMuteService: ChannelMuteService,
   ) {}
 
   private channels: {
@@ -142,7 +144,7 @@ export class ChatService {
   }
 
   removeMutedMember(channelId: string, userId: number) {
-    this.channelService.unmute(parseInt(channelId), userId);
+    this.channelMuteService.unmute(parseInt(channelId), userId);
 
     this.channels[channelId].mutedMembers = this.channels[
       channelId

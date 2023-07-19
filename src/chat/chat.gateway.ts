@@ -17,7 +17,7 @@ import {
 } from '@nestjs/websockets';
 import { WsJwtGuard } from 'src/auth/ws-jwt-guard.guard';
 import { JwtService } from '@nestjs/jwt';
-import { ChannelService } from 'src/channel/channel.service';
+import { ChannelService } from 'src/channel/services/channel.service';
 import { ChatService } from './chat.service';
 import { DeleteChannelMutedMemberDto } from 'src/channel/dto/delete-channel-muted-member.dto';
 // import { JwtPayload } from 'src/auth/jwt-payload.interface'; // any 타입 대신 사용할수도

@@ -10,7 +10,11 @@ import {
   Request,
   Query,
 } from '@nestjs/common';
-import { ChannelService } from './channel.service';
+import { ChannelService } from './services/channel.service';
+import { ChannelBanService } from './services/channel-ban.service';
+import { ChannelJoinService } from './services/channel-join.service';
+import { ChannelKickService } from './services/channel-kick.service';
+import { ChannelMuteService } from './services/channel-mute.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { UpdateChannelDto } from './dto/update-channel.dto';
 import { CreateChannelMemberDto } from './dto/create-channel-member.dto';
@@ -28,7 +32,13 @@ import { ChannelEntity } from './entities/channel.entity';
 
 @Controller('channel')
 export class ChannelController {
-  constructor(private readonly channelService: ChannelService) {}
+  constructor(
+    private readonly channelService: ChannelService,
+    private readonly channelJoinService: ChannelJoinService,
+    private readonly channelKickService: ChannelKickService,
+    private readonly channelMuteService: ChannelMuteService,
+    private readonly channelBanService: ChannelBanService,
+  ) {}
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
@@ -78,7 +88,7 @@ export class ChannelController {
       userId: req.user.id,
       isAdmin: false,
     };
-    return this.channelService.join(createChannelMemberDto);
+    return this.channelJoinService.join(createChannelMemberDto);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -95,7 +105,7 @@ export class ChannelController {
       channelId,
       userId: memberId,
     };
-    return this.channelService.mute(createChannelMutedMemberDto, userId);
+    return this.channelMuteService.mute(createChannelMutedMemberDto, userId);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -115,14 +125,15 @@ export class ChannelController {
       channelId,
       userId: memberId,
     };
-    return this.channelService.ban(createChannelBannedMemberDto, userId);
+    return this.channelBanService.ban(createChannelBannedMemberDto, userId);
   }
 
   @UseGuards(AuthGuard('jwt'))
   @Delete(':channelId/kicked-member')
   @ApiOperation({
     summary: '멤버 쫓아내기',
-    description: '관리자에 의해 채널에서 멤버를 쫓아냄. 채널 소유자는 쫓아낼 수 없음',
+    description:
+      '관리자에 의해 채널에서 멤버를 쫓아냄. 채널 소유자는 쫓아낼 수 없음',
   })
   @ApiResponse({ status: 200, description: 'Ok' })
   kick(
@@ -130,7 +141,7 @@ export class ChannelController {
     @Param('channelId') channelId: number,
     @Query('memberId') memberId: number,
   ) {
-    return this.channelService.kick(req.user.id, channelId, memberId);
+    return this.channelKickService.kick(req.user.id, channelId, memberId);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -191,7 +202,7 @@ export class ChannelController {
     console.log('userId', userId);
     console.log('deleteChannelBannedMemberDto', deleteChannelBannedMemberDto);
 
-    return this.channelService.deleteChannelBannedMember(
+    return this.channelBanService.deleteChannelBannedMember(
       userId,
       deleteChannelBannedMemberDto,
     );

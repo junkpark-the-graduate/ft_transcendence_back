@@ -1,5 +1,9 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { ChannelService } from './channel.service';
+import { ChannelService } from './services/channel.service';
+import { ChannelBanService } from './services/channel-ban.service';
+import { ChannelJoinService } from './services/channel-join.service';
+import { ChannelKickService } from './services/channel-kick.service';
+import { ChannelMuteService } from './services/channel-mute.service';
 import { ChannelController } from './channel.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ChannelEntity } from './entities/channel.entity';
@@ -19,7 +23,19 @@ import { ChatModule } from 'src/chat/chat.module';
     forwardRef(() => ChatModule),
   ],
   controllers: [ChannelController],
-  providers: [ChannelService],
-  exports: [ChannelService],
+  providers: [
+    ChannelService,
+    ChannelBanService,
+    ChannelMuteService,
+    ChannelJoinService,
+    ChannelKickService,
+  ],
+  exports: [
+    ChannelService,
+    ChannelBanService,
+    ChannelMuteService,
+    ChannelJoinService,
+    ChannelKickService,
+  ],
 })
 export class ChannelModule {}
