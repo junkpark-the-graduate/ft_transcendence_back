@@ -43,7 +43,6 @@ export class ChatGateway
 
   constructor(
     private jwtService: JwtService,
-    // private userService: UserService,
     private channelService: ChannelService,
     private chatService: ChatService, // private channels: ChatService['channels'],
   ) {
@@ -109,6 +108,8 @@ export class ChatGateway
     if (this.chatService.isMutedMember(channelId, userId)) {
       socket.emit('muted');
       return;
+    } else {
+      this.chatService.removeMutedMember(channelId, userId);
     }
 
     socket.to(channelId).emit('new_chat', {

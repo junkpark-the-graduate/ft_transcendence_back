@@ -8,10 +8,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ChannelEntity } from '../entities/channel.entity';
 import { Repository } from 'typeorm';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
+import { ChannelService } from './channel.service';
 
 @Injectable()
 export class ChannelJoinService {
   constructor(
+    private channelService: ChannelService,
+
     @InjectRepository(ChannelEntity)
     private readonly channelRepository: Repository<ChannelEntity>,
 
@@ -20,17 +23,11 @@ export class ChannelJoinService {
   ) {}
 
   async join(createChannelMemberDto: CreateChannelMemberDto) {
-    const channel = await this.channelRepository.findOne({
-      where: {
-        id: createChannelMemberDto.channelId,
-      },
-      relations: {
-        channelMembers: true,
-        channelBannedMembers: true,
-      },
-    });
+    const channel = await this.channelService.findOne(
+      createChannelMemberDto.channelId,
+      ['channelMembers', 'channelBannedMembers'],
+    );
 
-    if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
     // Todo: 비밀번호 체크
     // if (channel.password !== createChannelMemberDto.password)
     //   throw new ConflictException('비밀번호가 틀렸습니다.');

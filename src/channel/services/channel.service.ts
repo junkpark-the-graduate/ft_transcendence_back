@@ -8,20 +8,13 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { CreateChannelDto } from '../dto/create-channel.dto';
-import { UpdateChannelDto } from '../dto/update-channel.dto';
 import { CreateChannelMemberDto } from '../dto/create-channel-member.dto';
-import { CreateChannelMutedMemberDto } from '../dto/create-channel-muted-member.dto';
-import { CreateChannelBannedMemberDto } from '../dto/create-channel-banned-member.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ChannelEntity } from '../entities/channel.entity';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
 import { ChannelMutedMemberEntity } from '../entities/channel-muted-member.entity';
 import { ChannelBannedMemberEntity } from '../entities/channel-banned-member.entity';
-import { ChatGateway } from 'src/chat/chat.gateway';
-import { DeleteChannelBannedMemberDto } from '../dto/delete-channel-banned-member.dto';
-import { DeleteChannelMutedMemberDto } from '../dto/delete-channel-muted-member.dto';
-import { ChatService } from 'src/chat/chat.service';
 
 @Injectable()
 export class ChannelService {
@@ -36,13 +29,7 @@ export class ChannelService {
     private readonly channelMutedMemberRepository: Repository<ChannelMutedMemberEntity>,
 
     @InjectRepository(ChannelBannedMemberEntity)
-    private readonly channelBannedMemberRepository: Repository<ChannelBannedMemberEntity>,
-
-    @Inject(forwardRef(() => ChatGateway))
-    private readonly chatGateway: ChatGateway,
-
-    @Inject(forwardRef(() => ChatService))
-    private readonly chatService: ChatService,
+    private readonly channelBannedMemberRepository: Repository<ChannelBannedMemberEntity>, // @Inject(forwardRef(() => ChatGateway)) // private readonly chatGateway: ChatGateway, // @Inject(forwardRef(() => ChatService)) // private readonly chatService: ChatService,
   ) {}
 
   async create(createChannelDto: CreateChannelDto, ownerId: number) {
@@ -100,20 +87,23 @@ export class ChannelService {
     return channels;
   }
 
-  async findOne(channelId: number | string) {
+  async findOne(channelId: number | string, relations?: string[]) {
     if (typeof channelId === 'string') channelId = parseInt(channelId);
-    const channel = await this.channelRepository.findOne({
-      where: {
-        id: channelId,
-      },
-      relations: [
+    if (!relations)
+      relations = [
         'channelMembers',
         'channelMembers.user',
         'channelMutedMembers',
         'channelMutedMembers.user', //Todo: 필요 없으면 지워야함
         'channelBannedMembers',
         'channelBannedMembers.user',
-      ],
+      ];
+
+    const channel = await this.channelRepository.findOne({
+      where: {
+        id: channelId,
+      },
+      relations: relations,
     });
     if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
 
@@ -222,34 +212,36 @@ export class ChannelService {
     return member;
   }
 
-  private async vaildateChannel(
+  checkIsChannelMember(
+    channel: ChannelEntity,
     userId: number,
-    channelId: number,
-    memberId: number,
-  ): Promise<ChannelEntity> {
-    const channel = await this.channelRepository.findOne({
-      where: {
-        id: channelId,
-      },
-      relations: {
-        channelMembers: true,
-      },
-    });
-    if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
+  ): ChannelMemberEntity {
+    const member = channel.channelMembers.find(
+      (member) => member.userId === userId,
+    );
+    if (!member) throw new NotFoundException('채널 멤버가 아닙니다.');
+    return member;
+  }
 
+  checkIsChannelAdmin(
+    channel: ChannelEntity,
+    userId: number,
+  ): ChannelMemberEntity {
     const admin = channel.channelMembers.find(
       (member) => member.userId === userId,
     );
     if (!admin) throw new NotFoundException('채널 멤버가 아닙니다.');
     if (!admin.isAdmin)
       throw new UnauthorizedException('채널 관리자가 아닙니다.');
+    return admin;
+  }
 
-    const channelMember = channel.channelMembers.find(
-      (member) => member.userId === memberId,
-    );
-    if (!channelMember) throw new NotFoundException('채널 멤버가 아닙니다.');
-    if (channelMember.userId === channel.ownerId)
-      throw new UnauthorizedException('유저가 채널 소유자입니다.');
-    return channel;
+  checkIsChannelOwner(channel: ChannelEntity, userId: number, type: string) {
+    if (type === 'user' && channel.ownerId !== userId)
+      throw new UnauthorizedException('채널 소유자가 아닙니다.');
+    else if (type === 'member' && channel.ownerId === userId)
+      throw new UnauthorizedException(
+        '채널 소유자에게는 해당 작업을 수행할 수 없습니다.',
+      );
   }
 }

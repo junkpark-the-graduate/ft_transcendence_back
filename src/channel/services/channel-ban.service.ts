@@ -1,25 +1,22 @@
 import {
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
   forwardRef,
 } from '@nestjs/common';
 import { CreateChannelBannedMemberDto } from '../dto/create-channel-banned-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteChannelBannedMemberDto } from '../dto/delete-channel-banned-member.dto';
-import { ChannelEntity } from '../entities/channel.entity';
 import { Repository } from 'typeorm';
 import { ChannelBannedMemberEntity } from '../entities/channel-banned-member.entity';
 import { ChatGateway } from 'src/chat/chat.gateway';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
+import { ChannelService } from './channel.service';
 
 @Injectable()
 export class ChannelBanService {
   constructor(
-    @InjectRepository(ChannelEntity)
-    private readonly channelRepository: Repository<ChannelEntity>,
+    private channelService: ChannelService,
 
     @InjectRepository(ChannelMemberEntity)
     private readonly channelMemberRepository: Repository<ChannelMemberEntity>,
@@ -30,33 +27,28 @@ export class ChannelBanService {
     @Inject(forwardRef(() => ChatGateway))
     private readonly chatGateway: ChatGateway,
   ) {}
+
   async ban(
     createChannelBannedMemberDto: CreateChannelBannedMemberDto,
     userId: number,
   ) {
-    const channel = await this.channelRepository.findOne({
-      where: {
-        id: createChannelBannedMemberDto.channelId,
-      },
-      relations: {
-        channelMembers: true,
-        channelBannedMembers: true,
-      },
-    });
-    if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
-    const admin = channel.channelMembers.find(
-      (member) => member.userId === userId,
+    const channel = await this.channelService.findOne(
+      createChannelBannedMemberDto.channelId,
+      ['channelMembers', 'channelBannedMembers'],
     );
-    if (!admin) throw new NotFoundException('채널 멤버가 아닙니다.');
-    if (!admin.isAdmin)
-      throw new UnauthorizedException('채널 관리자가 아닙니다');
 
-    const channelMember = channel.channelMembers.find(
-      (member) => member.userId === createChannelBannedMemberDto.userId,
+    this.channelService.checkIsChannelAdmin(channel, userId);
+
+    this.channelService.checkIsChannelMember(
+      channel,
+      createChannelBannedMemberDto.userId,
     );
-    if (!channelMember) throw new NotFoundException('채널 멤버가 아닙니다.');
-    if (channelMember.userId === channel.ownerId)
-      throw new UnauthorizedException(' 밴할 소유자는수 없습니다.');
+
+    this.channelService.checkIsChannelOwner(
+      channel,
+      createChannelBannedMemberDto.userId,
+      'member',
+    );
 
     let banMember = channel.channelBannedMembers.find(
       (member) => member.userId === createChannelBannedMemberDto.userId,
@@ -80,15 +72,12 @@ export class ChannelBanService {
     userId: number,
     deleteChannelBannedMemberDto: DeleteChannelBannedMemberDto,
   ): Promise<ChannelBannedMemberEntity> {
-    const user = await this.channelMemberRepository.findOne({
-      where: {
-        userId,
-        channelId: deleteChannelBannedMemberDto.channelId,
-      },
-    });
-    if (!user) throw new NotFoundException('존재하지 않는 채널 멤버입니다.');
-    if (!user.isAdmin)
-      throw new UnauthorizedException('채널 관리자가 아닙니다.');
+    const channel = await this.channelService.findOne(
+      deleteChannelBannedMemberDto.channelId,
+      ['channelMembers', 'channelBannedMembers'],
+    );
+
+    this.channelService.checkIsChannelAdmin(channel, userId);
 
     const channelBannedMember =
       await this.channelBannedMemberRepository.findOne({

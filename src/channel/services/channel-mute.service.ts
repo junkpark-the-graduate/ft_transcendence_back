@@ -14,10 +14,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatService } from 'src/chat/chat.service';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
+import { ChannelService } from './channel.service';
 
 @Injectable()
 export class ChannelMuteService {
   constructor(
+    private channelService: ChannelService,
+
     @InjectRepository(ChannelEntity)
     private readonly channelRepository: Repository<ChannelEntity>,
 
@@ -35,30 +38,23 @@ export class ChannelMuteService {
     createChannelMutedMemberDto: CreateChannelMutedMemberDto,
     userId: number,
   ) {
-    const channel = await this.channelRepository.findOne({
-      where: {
-        id: createChannelMutedMemberDto.channelId,
-      },
-      relations: {
-        channelMembers: true,
-        channelMutedMembers: true,
-      },
-    });
-    if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
-
-    const admin = channel.channelMembers.find(
-      (member) => member.userId === userId,
+    const channel = await this.channelService.findOne(
+      createChannelMutedMemberDto.channelId,
+      ['channelMembers', 'channelMutedMembers'],
     );
-    if (!admin) throw new NotFoundException('채널 멤버가 아닙니다.');
-    if (!admin.isAdmin)
-      throw new UnauthorizedException('채널 관리자가 아닙니다');
 
-    const channelMember = channel.channelMembers.find(
-      (member) => member.userId === createChannelMutedMemberDto.userId,
+    this.channelService.checkIsChannelAdmin(channel, userId);
+
+    this.channelService.checkIsChannelMember(
+      channel,
+      createChannelMutedMemberDto.userId,
     );
-    if (!channelMember) throw new NotFoundException('채널 멤버가 아닙니다.');
-    if (channelMember.userId === channel.ownerId)
-      throw new UnauthorizedException('소유자는 뮤트할 수 없습니다.');
+
+    this.channelService.checkIsChannelOwner(
+      channel,
+      createChannelMutedMemberDto.userId,
+      'member',
+    );
 
     let mutedMember = channel.channelMutedMembers.find(
       (member) => member.userId === createChannelMutedMemberDto.userId,
@@ -82,21 +78,18 @@ export class ChannelMuteService {
   }
 
   async unmute(channelId: number, userId: number) {
-    const channel = await this.channelRepository.findOne({
-      where: {
-        id: channelId,
-      },
-      relations: {
-        channelMembers: true,
-        channelMutedMembers: true,
-      },
-    });
-    if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
+    const channel = await this.channelService.findOne(channelId, [
+      'channelMembers',
+      'channelMutedMembers',
+    ]);
 
     const mutedMember = channel.channelMutedMembers.find(
       (member) => member.userId === userId,
     );
-    if (!mutedMember) throw new NotFoundException('채널 뮤트 멤버가 아닙니다.');
+
+    console.log('mutedMember!!!!!!!!!!!!!!!!!!!!', mutedMember);
+    // if (!mutedMember) throw new NotFoundException('채널 뮤트 멤버가 아닙니다.');
+    if (!mutedMember) return;
 
     await this.channelMutedMemberRepository.delete({
       channelId: channelId,
@@ -106,30 +99,30 @@ export class ChannelMuteService {
     return mutedMember;
   }
 
-  async deleteChannelMutedMember(
-    userId: number,
-    deleteChannelMutedMemberDto: DeleteChannelMutedMemberDto,
-  ): Promise<ChannelMutedMemberEntity> {
-    const user = await this.channelMemberRepository.findOne({
-      where: {
-        userId,
-        channelId: deleteChannelMutedMemberDto.channelId,
-      },
-    });
-    if (!user) throw new NotFoundException('존재하지 않는 채널 멤버입니다.');
-    if (!user.isAdmin)
-      throw new UnauthorizedException('채널 관리자가 아닙니다.');
+  // async deleteChannelMutedMember(
+  //   userId: number,
+  //   deleteChannelMutedMemberDto: DeleteChannelMutedMemberDto,
+  // ): Promise<ChannelMutedMemberEntity> {
+  //   const user = await this.channelMemberRepository.findOne({
+  //     where: {
+  //       userId,
+  //       channelId: deleteChannelMutedMemberDto.channelId,
+  //     },
+  //   });
+  //   if (!user) throw new NotFoundException('존재하지 않는 채널 멤버입니다.');
+  //   if (!user.isAdmin)
+  //     throw new UnauthorizedException('채널 관리자가 아닙니다.');
 
-    const channelMutedMember = await this.channelMutedMemberRepository.findOne({
-      where: {
-        channelId: deleteChannelMutedMemberDto.channelId,
-        userId: deleteChannelMutedMemberDto.userId,
-      },
-    });
-    if (!channelMutedMember)
-      throw new NotFoundException('존재하지 않는 채널 뮤트 멤버입니다.');
+  //   const channelMutedMember = await this.channelMutedMemberRepository.findOne({
+  //     where: {
+  //       channelId: deleteChannelMutedMemberDto.channelId,
+  //       userId: deleteChannelMutedMemberDto.userId,
+  //     },
+  //   });
+  //   if (!channelMutedMember)
+  //     throw new NotFoundException('존재하지 않는 채널 뮤트 멤버입니다.');
 
-    await this.channelMutedMemberRepository.delete(deleteChannelMutedMemberDto);
-    return channelMutedMember;
-  }
+  //   await this.channelMutedMemberRepository.delete(deleteChannelMutedMemberDto);
+  //   return channelMutedMember;
+  // }
 }
