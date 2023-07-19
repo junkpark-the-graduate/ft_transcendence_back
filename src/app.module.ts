@@ -9,6 +9,7 @@ import { DummyModule } from './dummy/dummy.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { FollowModule } from './follow/follow.module';
+import { BlockModule } from './block/block.module';
 
 const typeOrmModuleOptions = {
   type: process.env.DB_TYPE,
@@ -33,6 +34,7 @@ const typeOrmModuleOptions = {
     AuthModule,
     UserModule,
     FollowModule,
+    BlockModule,
     DummyModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'dist', 'public'),
