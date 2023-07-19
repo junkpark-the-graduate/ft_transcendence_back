@@ -57,9 +57,10 @@ export class GameGateway
   afterInit(server: any) {
     this.logger.log('GameGateway initialized');
 
-    this.io.adapter['on']('delete-room', (room) => {
-      console.log(`room ${room} was delete`);
-      this.gameRoomMap.delete(room);
+    // TODO: 두명 다 나가면 서버가 터짐
+    this.io.adapter['on']('delete-room', (roomId) => {
+      console.log(`room ${roomId} was delete`);
+      this.gameRoomMap.delete(roomId);
     });
 
     const interval = setInterval(() => {
@@ -123,22 +124,8 @@ export class GameGateway
   handleReconnect(@ConnectedSocket() socket: Socket) {
     const ftId = socket['ftId'];
     const room = this.disconnectedUserMap.get(ftId);
-    // 튕긴 유저 재접속
-    if (room) {
-      console.log('room: ', room);
-      socket.emit('reconnection');
-      this.disconnectedUserMap.delete(ftId);
-      socket.join(room['roomId']);
-      const disconnectSocket =
-        room['player1'].ftId === ftId ? room['player1'] : room['player2'];
-      const isPlayer1: boolean = disconnectSocket.isPlayer1;
-      socket['room'] = room;
-      socket['paddle'] = disconnectSocket.paddle;
-      socket['isPlayer1'] = isPlayer1;
-      isPlayer1 ? (room['player1'] = socket) : (room['player2'] = socket);
-      return true;
-    }
-    return false;
+    this.disconnectedUserMap.delete(ftId);
+    return { roomId: room ? room['roomId'] : undefined };
   }
 
   @SubscribeMessage('join_room')
@@ -151,9 +138,24 @@ export class GameGateway
     }
 
     console.log('socket[room]: ', socket['room']);
-    // 초대해서 들어온 경우
+
     if (!socket['room']) {
-      console.log('invited');
+      const ftId = socket['ftId'];
+      // reconnection
+      if (this.disconnectedUserMap.get(ftId)) {
+        //socket.emit('reconnection');
+        this.disconnectedUserMap.delete(ftId);
+        socket.join(room['roomId']);
+        const disconnectSocket =
+          room['player1'].ftId === ftId ? room['player1'] : room['player2'];
+        const isPlayer1: boolean = disconnectSocket.isPlayer1;
+        socket['room'] = room;
+        socket['paddle'] = disconnectSocket.paddle;
+        socket['isPlayer1'] = isPlayer1;
+        isPlayer1 ? (room['player1'] = socket) : (room['player2'] = socket);
+        return { isSuccess: true };
+      }
+      // 초대해서 들어온 경우
       socket.join(roomId);
       socket['room'] = room;
       socket['isPlayer1'] = false;
@@ -162,7 +164,6 @@ export class GameGateway
       this.gameEngine.gameInit(room);
       this.gameEngine.gameLoop(room);
     }
-
     return { isSuccess: true };
   }
 
