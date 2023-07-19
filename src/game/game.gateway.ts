@@ -43,6 +43,7 @@ export class GameGateway
   private logger = new Logger('GameGateway');
 
   private disconnectedUserMap = new Map<number, any>();
+  private gameRoomMap = new Map<string, any>();
 
   constructor(
     private gameEngine: GameEngine,
@@ -55,10 +56,11 @@ export class GameGateway
 
   afterInit(server: any) {
     this.logger.log('GameGateway initialized');
-    // TODO 둘 다 튕겼을 때
-    //this.io.adapter['on']('delete-room', (room) => {
-    //  console.log(`room ${room} was delete`);
-    //});
+
+    this.io.adapter['on']('delete-room', (room) => {
+      console.log(`room ${room} was delete`);
+      this.gameRoomMap.delete(room);
+    });
 
     const interval = setInterval(() => {
       const match = this.gameMatchmaker.matchPlayers();
@@ -66,13 +68,13 @@ export class GameGateway
       if (match) {
         const { gameType, player1, player2 } = match;
         console.log('match_found');
-        const roomName = v4();
-        player1.emit('match_found', 'Match found');
-        player2.emit('match_found', 'Match found');
-        player1.join(roomName);
-        player2.join(roomName);
-        const room = this.io.in(roomName);
-        room['roomName'] = roomName;
+        const roomId = v4();
+        player1.emit('match_found', { roomId });
+        player2.emit('match_found', { roomId });
+        player1.join(roomId);
+        player2.join(roomId);
+        const room = this.io.in(roomId);
+        room['roomId'] = roomId;
         player1['room'] = room;
         player2['room'] = room;
         switch (gameType) {
@@ -88,6 +90,8 @@ export class GameGateway
         }
         room['player1'] = player1;
         room['player2'] = player2;
+
+        this.gameRoomMap.set(roomId, room);
         this.gameEngine.gameInit(room);
         this.gameEngine.gameLoop(room);
       }
@@ -124,7 +128,7 @@ export class GameGateway
       console.log('room: ', room);
       socket.emit('reconnection');
       this.disconnectedUserMap.delete(ftId);
-      socket.join(room['roomName']);
+      socket.join(room['roomId']);
       const disconnectSocket =
         room['player1'].ftId === ftId ? room['player1'] : room['player2'];
       const isPlayer1: boolean = disconnectSocket.isPlayer1;
@@ -135,6 +139,44 @@ export class GameGateway
       return true;
     }
     return false;
+  }
+
+  @SubscribeMessage('join_room')
+  handleJoinRoom(@ConnectedSocket() socket: Socket, @MessageBody() data) {
+    const { roomId } = data;
+    console.log('roomId', roomId);
+    const room = this.gameRoomMap.get(roomId);
+    if (!room) {
+      return { isSuccess: false };
+    }
+
+    console.log('socket[room]: ', socket['room']);
+    // 초대해서 들어온 경우
+    if (!socket['room']) {
+      console.log('invited');
+      socket.join(roomId);
+      socket['room'] = room;
+      socket['isPlayer1'] = false;
+      room['player2'] = socket;
+      room['type'] = 'friendly';
+      this.gameEngine.gameInit(room);
+      this.gameEngine.gameLoop(room);
+    }
+
+    return { isSuccess: true };
+  }
+
+  @SubscribeMessage('create_room')
+  handleCreateRoom(@ConnectedSocket() socket: Socket) {
+    const roomId = v4();
+    const room = this.io.in(roomId);
+
+    this.gameRoomMap.set(roomId, room);
+    room['player1'] = socket;
+    socket.join(roomId);
+    socket['room'] = room;
+    socket['isPlayer1'] = true;
+    return roomId;
   }
 
   @SubscribeMessage('normal_matching')
