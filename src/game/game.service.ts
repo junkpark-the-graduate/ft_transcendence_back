@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
+import { GameQueryDto } from './dto/game-query.dto';
 
 @Injectable()
 export class GameService {
-  create(createGameDto: CreateGameDto) {
-    return 'This action adds a new game';
+  create() {
+    return 'create';
   }
 
-  findAll() {
+  findAll(gameQueryDto: GameQueryDto) {
     return `This action returns all game`;
   }
 
@@ -16,11 +17,7 @@ export class GameService {
     return `This action returns a #${id} game`;
   }
 
-  update(id: number, updateGameDto: UpdateGameDto) {
-    return `This action updates a #${id} game`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} game`;
+  getUserMatchHistory() {
+    return `This action returns all game`;
   }
 }

@@ -78,17 +78,7 @@ export class GameGateway
         room['roomId'] = roomId;
         player1['room'] = room;
         player2['room'] = room;
-        switch (gameType) {
-          case GameType.NORMAL:
-            room['type'] = 'normal';
-            break;
-          case GameType.LADDER:
-            room['type'] = 'ladder';
-            break;
-          case GameType.FRIENDLY:
-            room['type'] = 'frendly';
-            break;
-        }
+        room['type'] = gameType;
         room['player1'] = player1;
         room['player2'] = player2;
 

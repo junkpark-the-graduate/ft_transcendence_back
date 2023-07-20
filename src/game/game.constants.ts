@@ -22,7 +22,7 @@ export {
 };
 
 export enum GameType {
-  NORMAL,
-  LADDER,
-  FRIENDLY,
+  NORMAL = 'normal',
+  LADDER = 'ladder',
+  FRIENDLY = 'friendly',
 }
