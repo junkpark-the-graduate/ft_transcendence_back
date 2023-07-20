@@ -8,6 +8,7 @@ import { LoggerMiddleware } from './middleware/logger.middleware';
 import { ChatModule } from './chat/chat.module';
 import { DummyModule } from './dummy/dummy.module';
 import { ChannelModule } from './channel/channel.module';
+import { BlockModule } from './block/block.module';
 
 const typeOrmModuleOptions = {
   type: process.env.DB_TYPE,
@@ -34,6 +35,7 @@ const typeOrmModuleOptions = {
     ChatModule,
     DummyModule,
     ChannelModule,
+    BlockModule,
   ],
   controllers: [],
   providers: [],

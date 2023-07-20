@@ -13,6 +13,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
+import { BlockEntity } from '../block/block.entity';
 
 export enum EUserStatus {
   offline,
@@ -79,4 +80,10 @@ export class UserEntity {
     (channelBannedMember) => channelBannedMember.user,
   )
   channelBannedMembers: ChannelBannedMemberEntity[];
+
+  @OneToMany(() => BlockEntity, (blockedUser) => blockedUser.user)
+  users: BlockEntity[];
+
+  @OneToMany(() => BlockEntity, (blockedUser) => blockedUser.blocking)
+  blockings: BlockEntity[];
 }
