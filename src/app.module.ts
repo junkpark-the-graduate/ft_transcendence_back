@@ -9,6 +9,11 @@ import { ChatModule } from './chat/chat.module';
 import { DummyModule } from './dummy/dummy.module';
 import { ChannelModule } from './channel/channel.module';
 import { BlockModule } from './block/block.module';
+import { DummyModule } from './dummy/dummy.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { FollowModule } from './follow/follow.module';
+import { BlockModule } from './block/block.module';
 
 const typeOrmModuleOptions = {
   type: process.env.DB_TYPE,
@@ -32,6 +37,12 @@ const typeOrmModuleOptions = {
     TypeOrmModule.forRoot(typeOrmModuleOptions),
     AuthModule,
     UserModule,
+    FollowModule,
+    BlockModule,
+    DummyModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'dist', 'public'),
+    }),
     ChatModule,
     DummyModule,
     ChannelModule,

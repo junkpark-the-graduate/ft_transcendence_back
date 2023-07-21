@@ -11,6 +11,10 @@ import {
   Request,
   Delete,
   Query,
+  UseInterceptors,
+  UploadedFile,
+  Query,
+  Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -24,6 +28,7 @@ import {
 } from '@nestjs/swagger';
 import { UserEntity } from './user.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('user')
 @ApiTags('user')
@@ -62,6 +67,16 @@ export class UserController {
     return this.userService.findOne(req.user.id);
   }
 
+  @Get('/:id')
+  @ApiOperation({
+    summary: '특정 유저 조회 API',
+    description: 'id로 특정 유저 조회',
+  })
+  @ApiResponse({ status: 200, description: 'OK', type: UserEntity })
+  findUser(@Param('id') userId: number) {
+    return this.userService.findOne(userId);
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Patch()
   @ApiOperation({
@@ -71,5 +86,18 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'OK', type: UserEntity })
   update(@Request() req, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(req.user.id, updateUserDto);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Patch('/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadFile(@Request() req, @UploadedFile() file: Express.Multer.File) {
+    console.log('id: ', req.user.id);
+    console.log('file:', file);
+    return this.userService.updateImage(
+      req.user.id,
+      file.filename,
+      file.mimetype,
+    );
   }
 }
