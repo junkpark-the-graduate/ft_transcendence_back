@@ -41,6 +41,8 @@ export class ChannelKickService {
 
     this.channelService.checkIsChannelOwner(channel, memberId, 'member');
 
+    this.channelService.checkIsMe(userId, memberId);
+
     this.chatGateway.kickMember(channelId, memberId);
 
     await this.channelMemberRepository.delete({ userId: memberId });

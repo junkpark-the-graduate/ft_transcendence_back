@@ -50,6 +50,8 @@ export class ChannelBanService {
       'member',
     );
 
+    this.channelService.checkIsMe(userId, createChannelBannedMemberDto.userId);
+
     let banMember = channel.channelBannedMembers.find(
       (member) => member.userId === createChannelBannedMemberDto.userId,
     );

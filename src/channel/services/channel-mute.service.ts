@@ -56,6 +56,8 @@ export class ChannelMuteService {
       'member',
     );
 
+    this.channelService.checkIsMe(userId, createChannelMutedMemberDto.userId);
+
     let mutedMember = channel.channelMutedMembers.find(
       (member) => member.userId === createChannelMutedMemberDto.userId,
     );

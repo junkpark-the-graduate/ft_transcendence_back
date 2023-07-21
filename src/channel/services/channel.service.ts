@@ -244,4 +244,11 @@ export class ChannelService {
         '채널 소유자에게는 해당 작업을 수행할 수 없습니다.',
       );
   }
+
+  checkIsMe(userId: number, memberId: number) {
+    if (userId === memberId)
+      throw new UnauthorizedException(
+        '자신에게는 해당 작업을 수행할 수 없습니다.',
+      );
+  }
 }
