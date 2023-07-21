@@ -43,7 +43,9 @@ export class ChannelMutedMemberEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => ChannelEntity, (channel) => channel.channelMembers)
+  @ManyToOne(() => ChannelEntity, (channel) => channel.channelMembers, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'channelId' })
   channel: ChannelEntity;
 

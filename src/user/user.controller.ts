@@ -13,7 +13,6 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
-  Query,
   Res,
 } from '@nestjs/common';
 import { UserService } from './user.service';

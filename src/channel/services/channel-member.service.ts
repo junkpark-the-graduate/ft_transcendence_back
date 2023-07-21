@@ -4,16 +4,23 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateChannelMemberDto } from '../dto/create-channel-member.dto';
+import { DeleteChannelMemberDto } from '../dto/delete-channel-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ChannelEntity } from '../entities/channel.entity';
 import { Repository } from 'typeorm';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
 import { ChannelService } from './channel.service';
+import { ChatService } from 'src/chat/chat.service';
+import { ChannelKickService } from './channel-kick.service';
 
 @Injectable()
-export class ChannelJoinService {
+export class ChannelMemberService {
   constructor(
     private channelService: ChannelService,
+
+    private chatService: ChatService,
+
+    private channelKickService: ChannelKickService,
 
     @InjectRepository(ChannelEntity)
     private readonly channelRepository: Repository<ChannelEntity>,
@@ -53,5 +60,30 @@ export class ChannelJoinService {
     await this.channelMemberRepository.save(channelMember);
 
     return channel;
+  }
+
+  async exit(deleteChannelMemberDto: DeleteChannelMemberDto) {
+    const channel = await this.channelService.findOne(
+      deleteChannelMemberDto.channelId,
+      ['channelMembers'],
+    );
+
+    this.channelService.checkIsChannelMember(
+      channel,
+      deleteChannelMemberDto.userId,
+    );
+
+    if (deleteChannelMemberDto.userId === channel.ownerId) {
+      this.channelService.delete(
+        deleteChannelMemberDto.userId,
+        deleteChannelMemberDto.channelId,
+      );
+    } else {
+      this.channelMemberRepository.delete(deleteChannelMemberDto);
+      this.chatService.removeConnectedMember(
+        deleteChannelMemberDto.channelId.toString(),
+        deleteChannelMemberDto.userId,
+      );
+    }
   }
 }

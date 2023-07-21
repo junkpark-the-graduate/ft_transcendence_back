@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ChannelService } from './services/channel.service';
 import { ChannelBanService } from './services/channel-ban.service';
-import { ChannelJoinService } from './services/channel-join.service';
+import { ChannelMemberService } from './services/channel-member.service';
 import { ChannelKickService } from './services/channel-kick.service';
 import { ChannelMuteService } from './services/channel-mute.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
@@ -21,6 +21,7 @@ import { CreateChannelMemberDto } from './dto/create-channel-member.dto';
 import { CreateChannelMutedMemberDto } from './dto/create-channel-muted-member.dto';
 import { CreateChannelBannedMemberDto } from './dto/create-channel-banned-member.dto';
 import { DeleteChannelBannedMemberDto } from './dto/delete-channel-banned-member.dto';
+import { DeleteChannelMemberDto } from './dto/delete-channel-member.dto';
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiCreatedResponse,
@@ -34,11 +35,24 @@ import { ChannelEntity } from './entities/channel.entity';
 export class ChannelController {
   constructor(
     private readonly channelService: ChannelService,
-    private readonly channelJoinService: ChannelJoinService,
+    private readonly channelMemberService: ChannelMemberService,
     private readonly channelKickService: ChannelKickService,
     private readonly channelMuteService: ChannelMuteService,
     private readonly channelBanService: ChannelBanService,
   ) {}
+
+  // /channel/:channelId----------------------------------------------------------------------------------------------------------------------
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('/joined')
+  @ApiOperation({
+    summary: '유저가 가입한 채널 조회 API',
+    description: '유저가 가입한 모든 채널 조회',
+  })
+  @ApiResponse({ status: 200, description: 'OK' })
+  findJoinedChannel(@Request() req) {
+    return this.channelService.findJoinedChannel(req.user.id);
+  }
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
@@ -46,9 +60,6 @@ export class ChannelController {
   @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
   @ApiResponse({ status: 201, description: 'Created' })
   create(@Request() req, @Body() createChannelDto: CreateChannelDto) {
-    console.log('!!!!!!!!!!!!!!11');
-    console.log('req.user.id', req.user.id);
-    console.log('createChannelDto', createChannelDto);
     return this.channelService.create(createChannelDto, req.user.id);
   }
 
@@ -78,6 +89,19 @@ export class ChannelController {
     return this.channelService.findOne(channelId);
   }
 
+  // /channel/:channelId/member ---------------------------------------------------------------------------------------------------------------
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':channelId/member')
+  @ApiOperation({
+    summary: '채널 멤버 조회 API',
+    description: '모든 채널 멤버 조히',
+  })
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  @ApiResponse({ status: 200, description: 'OK' })
+  findAllChannelMember(@Param('channelId') channelId: number) {
+    return this.channelService.findAllChannelMember(channelId);
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Post(':channelId/member')
   @ApiOperation({ summary: '채널 참여', description: '채널 참여' })
@@ -88,7 +112,32 @@ export class ChannelController {
       userId: req.user.id,
       isAdmin: false,
     };
-    return this.channelJoinService.join(createChannelMemberDto);
+    return this.channelMemberService.join(createChannelMemberDto);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':channelId/member')
+  @ApiOperation({ summary: '채널 나가기 API', description: '채널 나가기' })
+  @ApiResponse({ status: 200, description: 'OK' })
+  exit(@Request() req, @Param('channelId') channelId: number) {
+    const deleteChannelMemberDto: DeleteChannelMemberDto = {
+      channelId,
+      userId: req.user.id,
+    };
+    return this.channelMemberService.exit(deleteChannelMemberDto);
+  }
+
+  // /channel/:channelId/muted-member ---------------------------------------------------------------------------------------------------------------
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':channelId/muted-member')
+  @ApiOperation({
+    summary: '채널 뮤트 멤버 조회 API',
+    description: '모든 채널 뮤트 멤버 조회',
+  })
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  @ApiResponse({ status: 200, description: 'OK' })
+  findAllChannelMutedMember(@Param('channelId') channelId: number) {
+    return this.channelService.findAllChannelMutedMember(channelId);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -106,6 +155,18 @@ export class ChannelController {
       userId: memberId,
     };
     return this.channelMuteService.mute(createChannelMutedMemberDto, userId);
+  }
+
+  // /channel/:channelId/banned-member ---------------------------------------------------------------------------------------------------------------
+  @UseGuards(AuthGuard('jwt'))
+  @Get(':channelId/banned-member')
+  @ApiOperation({
+    summary: '채널 차단 멤버 조회 API',
+    description: '모든 채널 차단 멤버 조회',
+  })
+  @ApiResponse({ status: 200, description: 'OK' })
+  findAllChannelBannedMember(@Param('channelId') channelId: number) {
+    return this.channelService.findAllChannelBannedMember(channelId);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -126,60 +187,6 @@ export class ChannelController {
       userId: memberId,
     };
     return this.channelBanService.ban(createChannelBannedMemberDto, userId);
-  }
-
-  @UseGuards(AuthGuard('jwt'))
-  @Delete(':channelId/kicked-member')
-  @ApiOperation({
-    summary: '멤버 쫓아내기',
-    description:
-      '관리자에 의해 채널에서 멤버를 쫓아냄. 채널 소유자는 쫓아낼 수 없음',
-  })
-  @ApiResponse({ status: 200, description: 'Ok' })
-  kick(
-    @Request() req,
-    @Param('channelId') channelId: number,
-    @Query('memberId') memberId: number,
-  ) {
-    return this.channelKickService.kick(req.user.id, channelId, memberId);
-  }
-
-  @UseGuards(AuthGuard('jwt'))
-  @Get(':channelId/member')
-  @ApiOperation({
-    summary: '채널 멤버 조회 API',
-    description: '모든 채널 멤버 조히',
-  })
-  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
-  @ApiResponse({ status: 200, description: 'OK' })
-  findAllChannelMember(@Param('channelId') channelId: number) {
-    return this.channelService.findAllChannelMember(channelId);
-  }
-
-  //get muted members
-  @UseGuards(AuthGuard('jwt'))
-  @Get(':channelId/muted-member')
-  @ApiOperation({
-    summary: '채널 뮤트 멤버 조회 API',
-    description: '모든 채널 뮤트 멤버 조회',
-  })
-  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
-  @ApiResponse({ status: 200, description: 'OK' })
-  findAllChannelMutedMember(@Param('channelId') channelId: number) {
-    return this.channelService.findAllChannelMutedMember(channelId);
-  }
-
-  //get banned members
-  @UseGuards(AuthGuard('jwt'))
-  @Get(':channelId/banned-member')
-  @ApiOperation({
-    summary: '채널 차단 멤버 조회 API',
-    description: '모든 채널 차단 멤버 조회',
-  })
-  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
-  @ApiResponse({ status: 200, description: 'OK' })
-  findAllChannelBannedMember(@Param('channelId') channelId: number) {
-    return this.channelService.findAllChannelBannedMember(channelId);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -208,6 +215,24 @@ export class ChannelController {
     );
   }
 
+  // /channel/:channelId/kicked-member ---------------------------------------------------------------------------------------------------------------
+  @UseGuards(AuthGuard('jwt'))
+  @Delete(':channelId/kicked-member')
+  @ApiOperation({
+    summary: '멤버 쫓아내기',
+    description:
+      '관리자에 의해 채널에서 멤버를 쫓아냄. 채널 소유자는 쫓아낼 수 없음',
+  })
+  @ApiResponse({ status: 200, description: 'Ok' })
+  kick(
+    @Request() req,
+    @Param('channelId') channelId: number,
+    @Query('memberId') memberId: number,
+  ) {
+    return this.channelKickService.kick(req.user.id, channelId, memberId);
+  }
+
+  // /channel/:channelId/admin ---------------------------------------------------------------------------------------------------------------
   @UseGuards(AuthGuard('jwt'))
   @Get(':channelId/admin')
   @ApiOperation({

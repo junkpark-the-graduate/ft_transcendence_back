@@ -58,18 +58,27 @@ export class ChannelEntity {
   @OneToMany(
     () => ChannelMemberEntity,
     (channelMember) => channelMember.channel,
+    {
+      cascade: true,
+    },
   )
   channelMembers: ChannelMemberEntity[];
 
   @OneToMany(
     () => ChannelBannedMemberEntity,
     (channelBannedMember) => channelBannedMember.channel,
+    {
+      cascade: true,
+    },
   )
   channelBannedMembers: ChannelBannedMemberEntity[];
 
   @OneToMany(
     () => ChannelMutedMemberEntity,
     (channelMutedMember) => channelMutedMember.channel,
+    {
+      cascade: true,
+    },
   )
   channelMutedMembers: ChannelMutedMemberEntity[];
 

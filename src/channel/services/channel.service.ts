@@ -70,21 +70,20 @@ export class ChannelService {
       },
     });
     if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
-
     // TODO : 비번 걸린 채널이면 비번 확인
 
-    if (userId === channel.ownerId) {
-      await this.channelMemberRepository.delete({ channelId: channelId });
-      await this.channelRepository.delete(channelId);
-      return channel;
-    } else {
-      throw new UnauthorizedException('채널 삭제 권한이 없습니다.');
-    }
+    this.checkIsChannelOwner(channel, userId);
+
+    await this.channelRepository.delete({ id: channelId });
   }
 
   async findAll(): Promise<ChannelEntity[]> {
-    const channels = await this.channelRepository.find();
-    return channels;
+    try {
+      const channels = await this.channelRepository.find();
+      return channels;
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   async findOne(channelId: number | string, relations?: string[]) {
@@ -108,6 +107,15 @@ export class ChannelService {
     if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
 
     return channel;
+  }
+
+  async findJoinedChannel(userId: number) {
+    const channels = await this.channelRepository
+      .createQueryBuilder('channel')
+      .innerJoin('channel.channelMembers', 'channelMember')
+      .where('channelMember.userId = :userId', { userId })
+      .getMany();
+    return channels;
   }
 
   async findOneChannelMember(channelId: number | string, userId: number) {
@@ -236,10 +244,13 @@ export class ChannelService {
     return admin;
   }
 
-  checkIsChannelOwner(channel: ChannelEntity, userId: number, type: string) {
-    if (type === 'user' && channel.ownerId !== userId)
+  checkIsChannelOwner(channel: ChannelEntity, userId: number) {
+    if (channel.ownerId !== userId)
       throw new UnauthorizedException('채널 소유자가 아닙니다.');
-    else if (type === 'member' && channel.ownerId === userId)
+  }
+
+  checkIsNotChannelOwner(channel: ChannelEntity, userId: number) {
+    if (channel.ownerId === userId)
       throw new UnauthorizedException(
         '채널 소유자에게는 해당 작업을 수행할 수 없습니다.',
       );

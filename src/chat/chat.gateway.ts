@@ -81,11 +81,11 @@ export class ChatGateway
       // Todo: verifyAsync의 반환값 타입을 any가 아닌 JwtPayload로 바꾸기
       const payload: any = await this.jwtService.verifyAsync(token);
 
-      this.chatService.initChannels(channelId);
+      await this.chatService.initChannels(channelId);
 
-      this.chatService.addConnectedMember(channelId, payload.sub, socket);
+      await this.chatService.addConnectedMember(channelId, payload.sub, socket);
 
-      socket.join(channelId); // join the room based on channelId
+      await socket.join(channelId); // join the room based on channelId
 
       this.logger.log(`connected : ${socket.id} ${socket.nsp.name} ${token}`);
     } catch (err) {

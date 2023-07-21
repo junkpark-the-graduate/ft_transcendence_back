@@ -1,7 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { ChannelService } from './services/channel.service';
 import { ChannelBanService } from './services/channel-ban.service';
-import { ChannelJoinService } from './services/channel-join.service';
+import { ChannelMemberService } from './services/channel-member.service';
 import { ChannelKickService } from './services/channel-kick.service';
 import { ChannelMuteService } from './services/channel-mute.service';
 import { ChannelController } from './channel.controller';
@@ -27,14 +27,14 @@ import { ChatModule } from 'src/chat/chat.module';
     ChannelService,
     ChannelBanService,
     ChannelMuteService,
-    ChannelJoinService,
+    ChannelMemberService,
     ChannelKickService,
   ],
   exports: [
     ChannelService,
     ChannelBanService,
     ChannelMuteService,
-    ChannelJoinService,
+    ChannelMemberService,
     ChannelKickService,
   ],
 })

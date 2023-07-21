@@ -37,7 +37,9 @@ export class ChannelBannedMemberEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => ChannelEntity, (channel) => channel.channelBannedMembers)
+  @ManyToOne(() => ChannelEntity, (channel) => channel.channelBannedMembers, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'channelId' })
   channel: ChannelEntity;
 

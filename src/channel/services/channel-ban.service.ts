@@ -44,10 +44,9 @@ export class ChannelBanService {
       createChannelBannedMemberDto.userId,
     );
 
-    this.channelService.checkIsChannelOwner(
+    this.channelService.checkIsNotChannelOwner(
       channel,
       createChannelBannedMemberDto.userId,
-      'member',
     );
 
     this.channelService.checkIsMe(userId, createChannelBannedMemberDto.userId);

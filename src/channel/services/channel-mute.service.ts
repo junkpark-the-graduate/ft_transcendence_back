@@ -50,10 +50,9 @@ export class ChannelMuteService {
       createChannelMutedMemberDto.userId,
     );
 
-    this.channelService.checkIsChannelOwner(
+    this.channelService.checkIsNotChannelOwner(
       channel,
       createChannelMutedMemberDto.userId,
-      'member',
     );
 
     this.channelService.checkIsMe(userId, createChannelMutedMemberDto.userId);
