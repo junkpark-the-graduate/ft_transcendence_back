@@ -10,12 +10,16 @@ import { Repository } from 'typeorm';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
 import { ChannelService } from './channel.service';
 import { ChatService } from 'src/chat/chat.service';
-import { EChannelType } from '../entities/channel.entity';
+import { ChannelEntity, EChannelType } from '../entities/channel.entity';
 import * as bcrypt from 'bcrypt';
+import { UserService } from 'src/user/user.service';
+import { UserEntity } from 'src/user/user.entity';
 
 @Injectable()
 export class ChannelMemberService {
   constructor(
+    private usreService: UserService,
+
     private channelService: ChannelService,
 
     private chatService: ChatService,
@@ -94,5 +98,35 @@ export class ChannelMemberService {
         deleteChannelMemberDto.userId,
       );
     }
+  }
+
+  async invite(userId: number, createChannelMemberDto: CreateChannelMemberDto) {
+    const member: UserEntity = await this.usreService.findOne(
+      createChannelMemberDto.userId,
+    );
+    if (!member) throw new NotFoundException('존재하지 않는 사용자입니다.');
+
+    const channel: ChannelEntity = await this.channelService.findOne(
+      createChannelMemberDto.channelId,
+      ['channelMembers'],
+    );
+
+    if (
+      channel.channelMembers.find(
+        (member: ChannelMemberEntity) =>
+          member.userId === createChannelMemberDto.userId,
+      )
+    ) {
+      return channel;
+    }
+
+    this.channelService.checkIsChannelMember(channel, userId);
+    this.channelService.checkIsChannelAdmin(channel, userId);
+
+    const channelMember: ChannelMemberEntity =
+      this.channelMemberRepository.create(createChannelMemberDto);
+    await this.channelMemberRepository.save(channelMember);
+
+    return channel;
   }
 }

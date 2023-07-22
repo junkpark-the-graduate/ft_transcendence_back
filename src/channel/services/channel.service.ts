@@ -54,9 +54,6 @@ export class ChannelService {
       hashedPassword = await bcrypt.hash(password, salt);
     }
 
-    console.log('password : ', password);
-    console.log('hashedPassword : ', hashedPassword);
-
     const channel = this.channelRepository.create({
       ownerId,
       name,

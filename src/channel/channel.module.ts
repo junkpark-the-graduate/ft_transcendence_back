@@ -11,6 +11,7 @@ import { ChannelMemberEntity } from './entities/channel-member.entity';
 import { ChannelMutedMemberEntity } from './entities/channel-muted-member.entity';
 import { ChannelBannedMemberEntity } from './entities/channel-banned-member.entity';
 import { ChatModule } from 'src/chat/chat.module';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ChatModule } from 'src/chat/chat.module';
       ChannelBannedMemberEntity,
     ]),
     forwardRef(() => ChatModule),
+    UserModule,
   ],
   controllers: [ChannelController],
   providers: [

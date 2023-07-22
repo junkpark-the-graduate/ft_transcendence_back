@@ -144,6 +144,28 @@ export class ChannelController {
     return this.channelMemberService.exit(deleteChannelMemberDto);
   }
 
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post(':channelId/member/:memberId')
+  @ApiOperation({ summary: '채널 초대 API', description: '채널 초대' })
+  @ApiResponse({ status: 201, description: 'Created' })
+  invite(
+    @Request() req,
+    @Param('channelId') channelId: number,
+    @Param('memberId') memberId: number,
+  ) {
+    const createChannelMemberDto: CreateChannelMemberDto = {
+      channelId,
+      userId: memberId,
+      isAdmin: false,
+      password: null,
+    };
+    return this.channelMemberService.invite(
+      req.user.id,
+      createChannelMemberDto,
+    );
+  }
+
   // /channel/:channelId/muted-member ---------------------------------------------------------------------------------------------------------------
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(ClassSerializerInterceptor)
