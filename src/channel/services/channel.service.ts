@@ -5,19 +5,23 @@ import {
   UnauthorizedException,
   NotFoundException,
 } from '@nestjs/common';
+
 import { CreateChannelDto } from '../dto/create-channel.dto';
 import { CreateChannelMemberDto } from '../dto/create-channel-member.dto';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Brackets, EntityManager, Repository } from 'typeorm';
+import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import { ChannelEntity, EChannelType } from '../entities/channel.entity';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
 import { ChannelMutedMemberEntity } from '../entities/channel-muted-member.entity';
 import { ChannelBannedMemberEntity } from '../entities/channel-banned-member.entity';
 import * as bcrypt from 'bcrypt';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class ChannelService {
   constructor(
+    private readonly userService: UserService,
+
     @InjectRepository(ChannelEntity)
     private readonly channelRepository: Repository<ChannelEntity>,
 
@@ -29,6 +33,9 @@ export class ChannelService {
 
     @InjectRepository(ChannelBannedMemberEntity)
     private readonly channelBannedMemberRepository: Repository<ChannelBannedMemberEntity>, // @Inject(forwardRef(() => ChatGateway)) // private readonly chatGateway: ChatGateway, // @Inject(forwardRef(() => ChatService)) // private readonly chatService: ChatService,
+
+    @InjectEntityManager()
+    private entityManager: EntityManager,
   ) {}
 
   async create(createChannelDto: CreateChannelDto, ownerId: number) {
@@ -54,25 +61,91 @@ export class ChannelService {
       hashedPassword = await bcrypt.hash(password, salt);
     }
 
-    const channel = this.channelRepository.create({
-      ownerId,
-      name,
-      password: hashedPassword,
-      type,
+    const channel = await this.entityManager.transaction(async (manager) => {
+      const channelRepository = manager.getRepository(ChannelEntity);
+      const channelMemberRepository =
+        manager.getRepository(ChannelMemberEntity);
+
+      const channel = channelRepository.create({
+        ownerId,
+        name,
+        password: hashedPassword,
+        type,
+      });
+      await channelRepository.save(channel);
+
+      const createChannelMemberDto: CreateChannelMemberDto = {
+        channelId: channel.id,
+        userId: ownerId,
+        isAdmin: true,
+        password: password,
+      };
+      const channelMember = channelMemberRepository.create(
+        createChannelMemberDto,
+      );
+      await channelMemberRepository.save(channelMember);
+
+      return channel;
     });
-    await this.channelRepository.save(channel);
+    return channel;
+  }
 
-    const createChannelMemberDto: CreateChannelMemberDto = {
-      channelId: channel.id,
-      userId: ownerId,
-      isAdmin: true,
-      password: password,
-    };
-    const channelMember = this.channelMemberRepository.create(
-      createChannelMemberDto,
-    );
-    await this.channelMemberRepository.save(channelMember);
+  async createDirectChannel(userId: number, memberId: number) {
+    if (userId === memberId) {
+      throw new ConflictException(
+        '자신에게는 direct 채널을 생성할 수 없습니다.',
+      );
+    }
 
+    const member = await this.userService.findOne(memberId);
+    if (!member) {
+      throw new NotFoundException('존재하지 않는 사용자입니다.');
+    }
+
+    const tmp = await this.channelRepository
+      .createQueryBuilder('channel')
+      .innerJoinAndSelect('channel.channelMembers', 'channelMember')
+      .where('channel.type = :type', { type: EChannelType.direct })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where(
+            '(channel.ownerId = :ownerId AND channelMember.userId = :memberId)',
+          ).orWhere(
+            '(channel.ownerId = :memberId AND channelMember.userId = :ownerId)',
+          );
+        }),
+        { ownerId: userId, memberId: memberId },
+      )
+      .getOne();
+
+    if (tmp) {
+      throw new ConflictException('이미 존재하는 direct 채널입니다.');
+    }
+
+    const channel = await this.entityManager.transaction(async (manager) => {
+      const createChannelDto: CreateChannelDto = {
+        name: `${userId}-${memberId}`,
+        type: EChannelType.direct,
+        password: null,
+      };
+      const channel = this.channelRepository.create({
+        ownerId: userId,
+        ...createChannelDto,
+      });
+      await manager.save(channel);
+
+      const createChannelMemberDto: CreateChannelMemberDto = {
+        channelId: channel.id,
+        userId: memberId,
+        isAdmin: true,
+        password: null,
+      };
+      const channelMember = this.channelMemberRepository.create(
+        createChannelMemberDto,
+      );
+      await manager.save(channelMember);
+      return channel;
+    });
     return channel;
   }
 

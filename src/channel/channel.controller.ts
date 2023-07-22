@@ -70,6 +70,19 @@ export class ChannelController {
 
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(ClassSerializerInterceptor)
+  @Post('/direct')
+  @ApiOperation({
+    summary: '1:1 채널 생성 API',
+    description: '1:1 채널을 생성',
+  })
+  @ApiCreatedResponse({ description: '채널 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  @ApiResponse({ status: 201, description: 'Created' })
+  createDirectChannel(@Request() req, @Query('memberId') memberId: number) {
+    return this.channelService.createDirectChannel(req.user.id, memberId);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':channelId')
   @ApiOperation({ summary: '채널 삭제 API', description: '채널 삭제' })
   @ApiResponse({ status: 200, description: 'OK' })

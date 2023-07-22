@@ -20,7 +20,7 @@ import { TfaAuthService } from './services/tfa-auth.service';
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET, // 실제로는 비밀키를 환경 변수 등에서 가져와야 합니다.
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '6h' },
     }),
     MailerModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
