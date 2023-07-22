@@ -5,4 +5,5 @@ import { CreateChannelMemberDto } from './create-channel-member.dto';
 
 export class DeleteChannelMemberDto extends OmitType(CreateChannelMemberDto, [
   'isAdmin',
+  'password',
 ] as const) {}

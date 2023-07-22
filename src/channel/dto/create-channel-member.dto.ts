@@ -17,4 +17,8 @@ export class CreateChannelMemberDto {
   @IsBoolean()
   @ApiProperty()
   readonly isAdmin: boolean;
+
+  @IsString()
+  @ApiProperty()
+  readonly password: string;
 }

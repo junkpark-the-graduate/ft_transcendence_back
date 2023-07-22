@@ -6,12 +6,12 @@ import {
 import { CreateChannelMemberDto } from '../dto/create-channel-member.dto';
 import { DeleteChannelMemberDto } from '../dto/delete-channel-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ChannelEntity } from '../entities/channel.entity';
 import { Repository } from 'typeorm';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
 import { ChannelService } from './channel.service';
 import { ChatService } from 'src/chat/chat.service';
-import { ChannelKickService } from './channel-kick.service';
+import { EChannelType } from '../entities/channel.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ChannelMemberService {
@@ -19,11 +19,6 @@ export class ChannelMemberService {
     private channelService: ChannelService,
 
     private chatService: ChatService,
-
-    private channelKickService: ChannelKickService,
-
-    @InjectRepository(ChannelEntity)
-    private readonly channelRepository: Repository<ChannelEntity>,
 
     @InjectRepository(ChannelMemberEntity)
     private readonly channelMemberRepository: Repository<ChannelMemberEntity>,
@@ -35,18 +30,32 @@ export class ChannelMemberService {
       ['channelMembers', 'channelBannedMembers'],
     );
 
-    // Todo: 비밀번호 체크
-    // if (channel.password !== createChannelMemberDto.password)
-    //   throw new ConflictException('비밀번호가 틀렸습니다.');
-
     if (
       channel.channelMembers.find(
         (member) => member.userId === createChannelMemberDto.userId,
       )
     ) {
-      // TODO : 이미 참여한 채널일때의 상황 구별해야함
       return channel;
-      // throw new ConflictException("이미 참여한 채녈입니다");
+    }
+
+    // Todo channel type에 따른 참여 가능 여부 체크
+    // channel type	| pw	| search	| join ability
+    // direct	      | x	  | x	      | 2명만 참여가능
+    // public	      | x	  | o       | 누구나 참여가능
+    // private	    | x	  | x	      | 초대로만 참여가능
+    // protected	  | o	  | o	      | pw 입력 후 참여가능
+
+    if (channel.type === EChannelType.direct) {
+      if (channel.channelMembers.length >= 2)
+        throw new UnauthorizedException('채널 인원이 가득 찼습니다.');
+    } else if (channel.type === EChannelType.protected) {
+      const isMatch = await bcrypt.compare(
+        createChannelMemberDto.password,
+        channel.password,
+      );
+      if (!isMatch) throw new UnauthorizedException('비밀번호가 틀렸습니다.');
+    } else if (channel.type === EChannelType.private) {
+      throw new UnauthorizedException('비밀 채널입니다.');
     }
 
     const bannedMember = channel.channelBannedMembers.find(

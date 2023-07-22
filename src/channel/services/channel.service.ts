@@ -4,17 +4,16 @@ import {
   ConflictException,
   UnauthorizedException,
   NotFoundException,
-  Inject,
-  forwardRef,
 } from '@nestjs/common';
 import { CreateChannelDto } from '../dto/create-channel.dto';
 import { CreateChannelMemberDto } from '../dto/create-channel-member.dto';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ChannelEntity } from '../entities/channel.entity';
+import { ChannelEntity, EChannelType } from '../entities/channel.entity';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
 import { ChannelMutedMemberEntity } from '../entities/channel-muted-member.entity';
 import { ChannelBannedMemberEntity } from '../entities/channel-banned-member.entity';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class ChannelService {
@@ -42,10 +41,26 @@ export class ChannelService {
 
     if (tmp) throw new ConflictException('이미 존재하는 채널 이름입니다.');
 
+    if (type === EChannelType.protected && !password) {
+      throw new InternalServerErrorException(
+        '비밀번호가 필요한 채널을 생성하려면 비밀번호를 입력해야 합니다.',
+      );
+    }
+
+    let hashedPassword = null;
+
+    if (password) {
+      const salt = await bcrypt.genSalt(); // 기본값으로 10을 사용
+      hashedPassword = await bcrypt.hash(password, salt);
+    }
+
+    console.log('password : ', password);
+    console.log('hashedPassword : ', hashedPassword);
+
     const channel = this.channelRepository.create({
       ownerId,
       name,
-      password,
+      password: hashedPassword,
       type,
     });
     await this.channelRepository.save(channel);
@@ -54,6 +69,7 @@ export class ChannelService {
       channelId: channel.id,
       userId: ownerId,
       isAdmin: true,
+      password: password,
     };
     const channelMember = this.channelMemberRepository.create(
       createChannelMemberDto,
@@ -70,7 +86,6 @@ export class ChannelService {
       },
     });
     if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
-    // TODO : 비번 걸린 채널이면 비번 확인
 
     this.checkIsChannelOwner(channel, userId);
 

@@ -9,6 +9,8 @@ import {
   UseGuards,
   Request,
   Query,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { ChannelService } from './services/channel.service';
 import { ChannelBanService } from './services/channel-ban.service';
@@ -44,6 +46,7 @@ export class ChannelController {
   // /channel/:channelId----------------------------------------------------------------------------------------------------------------------
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get('/joined')
   @ApiOperation({
     summary: '유저가 가입한 채널 조회 API',
@@ -55,15 +58,18 @@ export class ChannelController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post()
   @ApiOperation({ summary: '채널 생성 API', description: '채널을 생성' })
   @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
   @ApiResponse({ status: 201, description: 'Created' })
   create(@Request() req, @Body() createChannelDto: CreateChannelDto) {
+    console.log('createChannelDto', createChannelDto);
     return this.channelService.create(createChannelDto, req.user.id);
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':channelId')
   @ApiOperation({ summary: '채널 삭제 API', description: '채널 삭제' })
   @ApiResponse({ status: 200, description: 'OK' })
@@ -72,6 +78,7 @@ export class ChannelController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get()
   @ApiOperation({ summary: '채널 조회 API', description: '모든 채널 조회' })
   // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
@@ -81,6 +88,7 @@ export class ChannelController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get(':channelId')
   @ApiOperation({ summary: '채널 조회 API', description: '채널 1개 조회' })
   // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
@@ -91,6 +99,7 @@ export class ChannelController {
 
   // /channel/:channelId/member ---------------------------------------------------------------------------------------------------------------
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get(':channelId/member')
   @ApiOperation({
     summary: '채널 멤버 조회 API',
@@ -103,19 +112,27 @@ export class ChannelController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post(':channelId/member')
   @ApiOperation({ summary: '채널 참여', description: '채널 참여' })
   @ApiResponse({ status: 201, description: 'Created' })
-  join(@Request() req, @Param('channelId') channelId: number) {
+  join(
+    @Request() req,
+    @Param('channelId') channelId: number,
+    @Query('password') password: string,
+  ) {
     const createChannelMemberDto: CreateChannelMemberDto = {
       channelId,
       userId: req.user.id,
       isAdmin: false,
+      password: password ? password : null,
     };
+    console.log('createChannelMemberDto', createChannelMemberDto);
     return this.channelMemberService.join(createChannelMemberDto);
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':channelId/member')
   @ApiOperation({ summary: '채널 나가기 API', description: '채널 나가기' })
   @ApiResponse({ status: 200, description: 'OK' })
@@ -129,6 +146,7 @@ export class ChannelController {
 
   // /channel/:channelId/muted-member ---------------------------------------------------------------------------------------------------------------
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get(':channelId/muted-member')
   @ApiOperation({
     summary: '채널 뮤트 멤버 조회 API',
@@ -141,6 +159,7 @@ export class ChannelController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post(':channelId/muted-member')
   @ApiOperation({ summary: '멤버 뮤트', description: 'time만큼 뮤트' })
   @ApiResponse({ status: 201, description: 'Created' })
@@ -159,6 +178,7 @@ export class ChannelController {
 
   // /channel/:channelId/banned-member ---------------------------------------------------------------------------------------------------------------
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get(':channelId/banned-member')
   @ApiOperation({
     summary: '채널 차단 멤버 조회 API',
@@ -190,6 +210,7 @@ export class ChannelController {
   }
 
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':channelId/banned-member')
   @ApiOperation({
     summary: '채널 차단 멤버 삭제 API',
@@ -217,6 +238,7 @@ export class ChannelController {
 
   // /channel/:channelId/kicked-member ---------------------------------------------------------------------------------------------------------------
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':channelId/kicked-member')
   @ApiOperation({
     summary: '멤버 쫓아내기',
@@ -234,6 +256,7 @@ export class ChannelController {
 
   // /channel/:channelId/admin ---------------------------------------------------------------------------------------------------------------
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get(':channelId/admin')
   @ApiOperation({
     summary: '채널 관리자 조회 API',

@@ -13,6 +13,7 @@ import { ChannelMemberEntity } from './channel-member.entity';
 import { ChannelBannedMemberEntity } from './channel-banned-member.entity';
 import { ChannelMutedMemberEntity } from './channel-muted-member.entity';
 import { UserEntity } from 'src/user/user.entity';
+import { Exclude } from 'class-transformer';
 
 export enum EChannelType {
   direct,
@@ -36,7 +37,8 @@ export class ChannelEntity {
   name: string;
 
   @ApiProperty()
-  @Column({ length: 50, nullable: true })
+  @Column({ length: 300, nullable: true })
+  @Exclude()
   password: string;
 
   @ApiProperty()

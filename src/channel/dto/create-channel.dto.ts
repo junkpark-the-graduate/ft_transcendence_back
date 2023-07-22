@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
 import { EChannelType } from '../entities/channel.entity';
 
 export class CreateChannelDto {
@@ -8,7 +8,8 @@ export class CreateChannelDto {
   @ApiProperty()
   readonly name: string;
 
-  // 해시로 암호화 해야함
+  @IsString()
+  @Length(0, 30)
   @ApiProperty()
   readonly password: string;
 
