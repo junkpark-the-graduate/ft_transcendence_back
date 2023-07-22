@@ -10,35 +10,40 @@ export class DummyController {
     private readonly dummyService: DummyService,
   ) {}
 
-  dummy1 = {
-    id: 1,
-    name: 'test1',
-    email: 'test1@gmail.com',
-    image: null,
-  };
-
-  dummy2 = {
-    id: 2,
-    name: 'test2',
-    email: 'test2@gmail.com',
-    image: null,
-  };
+  private createDummyUser() {
+    const dummys = [];
+    for (let i = 1; i <= 10; i++) {
+      const dummy = {
+        id: i,
+        name: `test${i}`,
+        email: `test${i}@gmail.com`,
+        image: null,
+      };
+      dummys.push(dummy);
+    }
+    return dummys;
+  }
 
   @Post()
   async create() {
-    const dto1 = this.dummy1 as CreateUserDto;
-    const dto2 = this.dummy2 as CreateUserDto;
+    const dummys = this.createDummyUser();
     const res = [];
-    res.push(await this.userService.create(dto1));
-    res.push(await this.userService.create(dto2));
+    let dto = null;
+    for (const dummy of dummys) {
+      dto = dummy as CreateUserDto;
+      res.push(await this.userService.create(dto));
+    }
     return res;
   }
 
   @Get()
   async getDummyAccessToken() {
+    const dummys = this.createDummyUser();
     const res = [];
-    res.push(await this.dummyService.getDummyAccessToken(this.dummy1.id));
-    res.push(await this.dummyService.getDummyAccessToken(this.dummy2.id));
+
+    for (const dummy of dummys) {
+      res.push(await this.dummyService.getDummyAccessToken(dummy.id));
+    }
     return res;
   }
 }
