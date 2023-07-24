@@ -29,11 +29,6 @@ import { GameQueryDto } from './dto/game-query.dto';
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
-  // @Post()
-  // create(@Body() createGameDto: CreateGameDto) {
-  //   return this.gameService.create(createGameDto);
-  // }
-
   @Get('games')
   @ApiOperation({ summary: '전적 조회 API', description: '모든 게임 조회' })
   @ApiQuery({ type: GameQueryDto })
@@ -41,8 +36,8 @@ export class GameController {
     type: GameEntity,
     isArray: true,
   })
-  findAll(@Query() query: GameQueryDto) {
-    return this.gameService.findAll();
+  findAll(@Query() gameQueryDto: GameQueryDto) {
+    return this.gameService.findAll(gameQueryDto);
   }
 
   @Get('games/:id')

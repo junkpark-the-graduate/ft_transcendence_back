@@ -72,7 +72,7 @@ Table Games {
   player2Id         int
   gameType          string
   gameResult        string
-  startTime         timestamp
+  createdAt         timestamp
 }
 
 Ref: Tfa.ftId                   - Users.ftId

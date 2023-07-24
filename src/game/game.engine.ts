@@ -42,7 +42,7 @@ export class GameEngine {
   gameInit(room) {
     const { player1, player2 } = room;
 
-    room['startTime'] = new Date();
+    room['createdAt'] = new Date();
     room['ball'] = {
       pos: {
         x: 0,
@@ -135,7 +135,7 @@ export class GameEngine {
       player2Id: player2['ftId'],
       gameType: room['type'],
       gameResult: winner === player1 ? 'player1' : 'player2',
-      startTime: room['startTime'],
+      createdAt: room['createdAt'],
     });
     this.gameRepository.save(game);
 
