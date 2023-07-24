@@ -162,17 +162,21 @@ export class ChannelService {
     if (updateChannelDto.name) {
       channel.name = updateChannelDto.name;
     }
-    if (updateChannelDto.type) {
-      channel.type = updateChannelDto.type;
+
+    if (updateChannelDto.type === EChannelType.direct) {
+      throw new InternalServerErrorException('DM으로 변경할 수 없습니다.');
     }
 
-    if (updateChannelDto.type === EChannelType.protected) {
-      if (!updateChannelDto.password)
-        throw new InternalServerErrorException(
-          '비밀번호가 필요한 채널을 생성하려면 비밀번호를 입력해야 합니다.',
-        );
-      const salt = await bcrypt.genSalt();
-      channel.password = await bcrypt.hash(updateChannelDto.password, salt);
+    if (updateChannelDto.type) {
+      if (updateChannelDto.type === EChannelType.protected) {
+        if (!updateChannelDto.password)
+          throw new InternalServerErrorException(
+            '비밀번호가 필요한 채널을 생성하려면 비밀번호를 입력해야 합니다.',
+          );
+        const salt = await bcrypt.genSalt();
+        channel.password = await bcrypt.hash(updateChannelDto.password, salt);
+      }
+      channel.type = updateChannelDto.type;
     }
 
     await this.channelRepository.save(channel);
