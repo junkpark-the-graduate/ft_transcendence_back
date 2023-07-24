@@ -14,17 +14,17 @@ export class GameService {
   ) {}
 
   async findAll(gameQueryDto: GameQueryDto): Promise<GameEntity[]> {
-    const { sort, offset, gameType } = gameQueryDto;
+    const { sort, gameType, limit, offset } = gameQueryDto;
 
     return await this.gameRepository.find({
       where: {
-        gameType: gameType === 'all' ? undefined : gameType,
+        gameType: gameType,
       },
       order: {
-        createdAt: sort.toUpperCase() === 'DESC' ? 'DESC' : 'ASC',
+        createdAt: sort,
       },
-      take: 10,
-      skip: offset ? offset : 0,
+      take: limit,
+      skip: offset * limit,
     });
   }
 
@@ -34,5 +34,19 @@ export class GameService {
 
   getUserMatchHistory() {
     return `This action returns all game`;
+  }
+
+  test() {
+    this.gameRepository.insert({
+      player1Id: Math.round(Math.random() * 10000),
+      player2Id: Math.round(Math.random() * 10000),
+      // random
+      gameType: ['normal', 'ladder', 'friendly'][
+        Math.round(Math.random() * 3) % 3
+      ],
+      gameResult: ['player1', 'player2'][Math.round(Math.random() * 2) % 2],
+      createdAt: new Date(),
+    });
+    return;
   }
 }

@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { GameService } from './game.service';
 import { CreateGameDto } from './dto/create-game.dto';
@@ -36,7 +37,11 @@ export class GameController {
     type: GameEntity,
     isArray: true,
   })
-  findAll(@Query() gameQueryDto: GameQueryDto) {
+  findAll(
+    @Query()
+    gameQueryDto: GameQueryDto,
+  ) {
+    console.log(gameQueryDto);
     return this.gameService.findAll(gameQueryDto);
   }
 
@@ -72,5 +77,10 @@ export class GameController {
   })
   getUserMatchHistory(@Param('ftid') id: string) {
     //return this.gameService.getUserMatchHistory(+id);
+  }
+
+  @Post('test')
+  test() {
+    return this.gameService.test();
   }
 }
