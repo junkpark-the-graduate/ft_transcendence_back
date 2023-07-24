@@ -29,23 +29,18 @@ import { GameQueryDto } from './dto/game-query.dto';
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
-  // @Post()
-  // create(@Body() createGameDto: CreateGameDto) {
-  //   return this.gameService.create(createGameDto);
-  // }
-
-  @Get('games')
+  @Get('')
   @ApiOperation({ summary: '전적 조회 API', description: '모든 게임 조회' })
   @ApiQuery({ type: GameQueryDto })
   @ApiOkResponse({
     type: GameEntity,
     isArray: true,
   })
-  findAll(@Query() gameQueryDtoQuery: GameQueryDto) {
-    return this.gameService.findAll(gameQueryDtoQuery);
+  findAll(@Query() gameQueryDto: GameQueryDto) {
+    return this.gameService.findAll(gameQueryDto);
   }
 
-  @Get('games/:id')
+  @Get('/:id')
   @ApiOperation({
     summary: '특정 게임 조회 API',
     description: 'id로 특정 게임 조회',
@@ -61,7 +56,7 @@ export class GameController {
     return this.gameService.findOne(+id);
   }
 
-  @Get('games/by-ftid/:ftid')
+  @Get('/by-ftid/:ftid')
   @ApiOperation({
     summary: '유저의 전적 조회 API',
     description: '유저의 전적 조회',

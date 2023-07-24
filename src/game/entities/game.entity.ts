@@ -36,5 +36,5 @@ export class GameEntity {
 
   @ApiProperty()
   @Column()
-  startTime: Date;
+  createdAt: Date;
 }

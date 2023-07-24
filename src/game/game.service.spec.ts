@@ -49,31 +49,10 @@ describe('GameService', () => {
         player2Id: i + 1, // random
         gameType: type[i % 3], // random
         gameResult: 'player1',
-        startTime: new Date(),
+        createdAt: new Date(),
       });
     }
   });
-
-  describe('create', () => {
-    it('should create a game', async () => {
-      const game: CreateGameDto = {
-        player1Id: 1,
-        player2Id: 2,
-        gameType: 'ladder',
-        gameResult: 'player1',
-        startTime: new Date(),
-      };
-
-      const result = await service.create(game);
-
-      expect(result).toBeDefined();
-      expect(result.id).toBeDefined();
-      expect(result.player1Id).toBe(game.player1Id);
-      expect(result.player2Id).toBe(game.player2Id);
-      expect(result.gameType).toBe(game.gameType);
-      expect(result.gameResult).toBe(game.gameResult);
-      expect(result.startTime).toBe(game.startTime);
-    });
 
     // it('should throw an error if the user does not exist', async () => {});
   });
@@ -92,7 +71,7 @@ describe('GameService', () => {
           player2Id: 2,
           gameType: 'ladder',
           gameResult: 'player1',
-          startTime: new Date(),
+          createdAt: new Date(),
         },
         {
           id: 2,
@@ -100,7 +79,7 @@ describe('GameService', () => {
           player2Id: 2,
           gameType: 'ladder',
           gameResult: 'player1',
-          startTime: new Date(),
+          createdAt: new Date(),
         },
         {
           id: 3,
@@ -108,7 +87,7 @@ describe('GameService', () => {
           player2Id: 2,
           gameType: 'normal',
           gameResult: 'player2',
-          startTime: new Date(),
+          createdAt: new Date(),
         },
       ]);
 

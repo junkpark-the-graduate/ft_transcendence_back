@@ -33,6 +33,7 @@ Table Games {
   gameType          string
   gameResult        string
   createdAt         timestamp
+<<<<<<< HEAD
 }
 --------------------------------------
 Table Follows {
@@ -41,6 +42,8 @@ Table Follows {
   indexes {
     (userId, following) [pk]
   }
+=======
+>>>>>>> feature/game
 }
 
 Table Blocks {
