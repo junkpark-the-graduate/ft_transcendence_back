@@ -83,6 +83,26 @@ export class ChannelController {
 
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(ClassSerializerInterceptor)
+  @Patch(':channelId')
+  @ApiOperation({
+    summary: '채널 수정 API',
+    description: '채널 수정. 소유자만 접근 가능',
+  })
+  @ApiCreatedResponse({ description: '수정 성공', type: ChannelEntity })
+  @ApiResponse({ status: 200, description: 'OK' })
+  update(
+    @Request() req,
+    @Param('channelId') channelId: number,
+    @Body() updateChannelDto: UpdateChannelDto,
+  ): Promise<ChannelEntity> {
+    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!');
+    console.log(updateChannelDto.name);
+    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!');
+    return this.channelService.update(req.user.id, channelId, updateChannelDto);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':channelId')
   @ApiOperation({ summary: '채널 삭제 API', description: '채널 삭제' })
   @ApiResponse({ status: 200, description: 'OK' })
