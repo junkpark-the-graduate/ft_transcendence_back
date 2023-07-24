@@ -95,6 +95,20 @@ export class UserService {
     return updatedUser;
   }
 
+  async updateMmr(id: number, mmr: number) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    user.mmr = mmr;
+
+    const updatedUser = await this.userRepository.save(user);
+
+    return updatedUser;
+  }
+
   async remove(id: number) {
     return `This action removes a #${id} user`;
   }
