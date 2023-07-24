@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { GameRecordEntity } from 'src/game/entities/game-record.entity';
-import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
 import {
   Entity,
   Column,
   PrimaryColumn,
   PrimaryGeneratedColumn,
   Unique,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';

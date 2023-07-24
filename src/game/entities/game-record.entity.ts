@@ -25,6 +25,6 @@ export class GameRecordEntity {
   @ManyToOne(() => GameEntity, (game) => game.id)
   game: GameEntity;
 
-  @ManyToOne(() => UserEntity, (user) => user.ftId)
+  @ManyToOne(() => UserEntity, (user) => user.id)
   user: UserEntity;
 }
