@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { GameService } from './game.service';
 import { CreateGameDto } from './dto/create-game.dto';
@@ -45,7 +46,7 @@ export class GameController {
     return this.gameService.findAll(gameQueryDto);
   }
 
-  @Get('/:id')
+  @Get(':id')
   @ApiOperation({
     summary: '특정 게임 조회 API',
     description: 'id로 특정 게임 조회',
@@ -57,8 +58,8 @@ export class GameController {
   @ApiNotFoundResponse({
     description: '해당 id의 게임이 없습니다.',
   })
-  findOne(@Param('id') id: string) {
-    return this.gameService.findOne(+id);
+  async findOne(@Param('id', new ParseIntPipe()) id: number) {
+    return await this.gameService.findOne(id);
   }
 
   @Get('/by-ftid/:ftid')

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { GameQueryDto } from './dto/game-query.dto';
@@ -28,8 +28,17 @@ export class GameService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} game`;
+  async findOne(id: number) {
+    const gameEntity = await this.gameRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!gameEntity) {
+      throw new NotFoundException('찾고자 하는 게임이 없습니다.');
+    }
+    return gameEntity;
   }
 
   getUserMatchHistory() {
