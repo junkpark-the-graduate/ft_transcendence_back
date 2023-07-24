@@ -25,6 +25,7 @@ export class GameRecordEntity {
   @ManyToOne(() => GameEntity, (game) => game.id)
   game: GameEntity;
 
+  @JoinColumn({ name: 'userFtId' })
   @ManyToOne(() => UserEntity, (user) => user.id)
   user: UserEntity;
 }

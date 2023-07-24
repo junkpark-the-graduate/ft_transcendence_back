@@ -8,11 +8,11 @@ import { GameEntity } from './entities/game.entity';
 import { GameMatchmaker } from './game.matchmaker';
 import { UserService } from 'src/user/user.service';
 import { UserEntity } from 'src/user/user.entity';
+import { GameRecordEntity } from './entities/game-record.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([GameEntity]),
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([GameEntity, UserEntity, GameRecordEntity]),
   ],
   controllers: [GameController],
   providers: [

@@ -56,7 +56,7 @@ export class GameController {
     type: GameEntity,
   })
   @ApiNotFoundResponse({
-    description: '해당 id의 게임이 없습니다.',
+    description: '찾고자 하는 게임이 없습니다.',
   })
   async findOne(@Param('id', new ParseIntPipe()) id: number) {
     return await this.gameService.findOne(id);
@@ -76,12 +76,10 @@ export class GameController {
   @ApiNotFoundResponse({
     description: '해당 id의 유저가 없습니다.',
   })
-  getUserMatchHistory(@Param('ftid') id: string) {
-    //return this.gameService.getUserMatchHistory(+id);
-  }
-
-  @Post('test')
-  test() {
-    return this.gameService.test();
+  getUserMatchHistory(
+    @Param('ftid', new ParseIntPipe()) id: number,
+    @Query() gameQueryDto: GameQueryDto,
+  ) {
+    return this.gameService.getUserMatchHistory(id, gameQueryDto);
   }
 }

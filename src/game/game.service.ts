@@ -1,16 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { GameQueryDto } from './dto/game-query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { GameEntity } from './entities/game.entity';
+import { GameRecordEntity } from './entities/game-record.entity';
 
 @Injectable()
 export class GameService {
   constructor(
     @InjectRepository(GameEntity)
     private readonly gameRepository: Repository<GameEntity>,
+    @InjectRepository(GameRecordEntity)
+    private readonly gameRecordRepository: Repository<GameRecordEntity>,
   ) {}
 
   async findAll(gameQueryDto: GameQueryDto): Promise<GameEntity[]> {
@@ -41,8 +44,72 @@ export class GameService {
     return gameEntity;
   }
 
-  getUserMatchHistory() {
-    return `This action returns all game`;
+  async getUserMatchHistory(
+    id: number,
+    gameQueryDto: GameQueryDto,
+  ): Promise<GameEntity[]> {
+    const { sort, gameType, limit, offset } = gameQueryDto;
+
+    // TODO userEntity의 gameRecords 활용
+    //const userEntity = await this.userService.findOne({ // 없으면 알아서 떤질거고
+    //  where: {
+    //    id: id,
+    //  },
+    //});
+    //const gameRecordEntities = userEntity.gameRecords;
+
+    const gameRecordEntities = await this.gameRecordRepository.find({
+      where: {
+        userFtId: id,
+      },
+    });
+
+    const gameIds = gameRecordEntities.map((gameRecordEntity) => {
+      return gameRecordEntity.gameId;
+    });
+    let gameEntities = await this.gameRepository.findBy({
+      id: In(gameIds),
+      gameType: gameType,
+    });
+
+    if (sort === 'ASC') {
+      gameEntities.reverse();
+    }
+
+    gameEntities = gameEntities.splice(offset * limit, limit);
+    return gameEntities;
+  }
+
+  async saveGameResult(createGameDto: CreateGameDto) {
+    const { player1Id, player2Id, gameType, gameResult } = createGameDto;
+
+    const gameEntity = this.gameRepository.create({
+      player1Id,
+      player2Id,
+      gameType,
+      gameResult,
+      createdAt: new Date(),
+    });
+
+    const savedGameEntity = await this.gameRepository.save(gameEntity);
+
+    console.log(savedGameEntity);
+
+    const gameRecord1 = this.gameRecordRepository.create({
+      userFtId: player1Id,
+      gameId: savedGameEntity.id,
+    });
+
+    const gameRecord2 = this.gameRecordRepository.create({
+      userFtId: player2Id,
+      gameId: savedGameEntity.id,
+    });
+
+    const savedGameRecord1 = await this.gameRecordRepository.save(gameRecord1);
+    const savedGameRecord2 = await this.gameRecordRepository.save(gameRecord2);
+
+    console.log(savedGameRecord1);
+    console.log(savedGameRecord2);
   }
 
   test() {
