@@ -75,6 +75,14 @@ export class UserController {
     return this.userService.findOne(userId);
   }
 
+  @Post('check-name')
+  async checkDuplicateName(
+    @Body() { name }: { name: string },
+  ): Promise<{ isDuplicate: boolean }> {
+    const isDuplicate = await this.userService.checkDuplicateName(name);
+    return { isDuplicate };
+  }
+
   @UseGuards(AuthGuard('jwt'))
   @Patch()
   @ApiOperation({

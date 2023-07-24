@@ -72,6 +72,11 @@ export class UserService {
     return user;
   }
 
+  async checkDuplicateName(name: string): Promise<boolean> {
+    const existingUser = await this.userRepository.findOne({ where: { name } });
+    return !!existingUser;
+  }
+
   async updateImage(id: number, filename: string, extension: string) {
     console.log('filename:', filename);
 
