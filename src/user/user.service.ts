@@ -109,6 +109,16 @@ export class UserService {
     return updatedUser;
   }
 
+  async getUserRanking(offset: number, limit: number) {
+    return await this.userRepository.find({
+      order: {
+        mmr: 'DESC',
+      },
+      skip: limit * offset,
+      take: limit,
+    });
+  }
+
   async remove(id: number) {
     return `This action removes a #${id} user`;
   }
