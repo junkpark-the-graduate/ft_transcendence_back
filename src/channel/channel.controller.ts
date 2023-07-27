@@ -59,6 +59,18 @@ export class ChannelController {
 
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(ClassSerializerInterceptor)
+  @Get('/joined/:channelId')
+  @ApiOperation({
+    summary: '유저의 해당 채널 가입 여부 조회 API',
+    description: '유저가 해당 채널에 가입했는지 조회',
+  })
+  @ApiResponse({ status: 200, description: 'OK' })
+  findOneJoinedChannel(@Request() req, @Param('channelId') channelId: number) {
+    return this.channelService.findOneChannelMember(channelId, req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post()
   @ApiOperation({ summary: '채널 생성 API', description: '채널을 생성' })
   @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
@@ -160,7 +172,6 @@ export class ChannelController {
       isAdmin: false,
       password: password ? password : null,
     };
-    console.log('createChannelMemberDto', createChannelMemberDto);
     return this.channelMemberService.join(createChannelMemberDto);
   }
 
