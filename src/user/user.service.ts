@@ -1,17 +1,23 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Repository } from 'typeorm';
-import { UserEntity } from './user.entity';
+import { EUserStatus, UserEntity } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-
+import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    private jwtService: JwtService,
   ) {}
 
   async create(createUserDto: CreateUserDto) {
@@ -63,12 +69,9 @@ export class UserService {
         id: id,
       },
     });
-
     user.name = name;
     user.twoFactorEnabled = twoFactorEnabled;
-
     user = await this.userRepository.save(user);
-
     return user;
   }
 
@@ -98,6 +101,32 @@ export class UserService {
     const updatedUser = await this.userRepository.save(user);
 
     return updatedUser;
+  }
+
+  async updateUserStatus(userId: number, status: EUserStatus) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+    if (user) {
+      user.status = status;
+      await this.userRepository.save(user);
+    }
+  }
+
+  // 주어진 userId에 해당하는 유저의 상태를 검색하는 메서드
+  async findUserStatusById(userId: number): Promise<EUserStatus> {
+    // userId를 이용하여 데이터베이스에서 유저의 상태를 검색
+    const user = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user.status;
   }
 
   async remove(id: number) {
