@@ -65,7 +65,8 @@ export class GameGateway
 
     const interval = setInterval(() => {
       const match = this.gameMatchmaker.matchPlayers();
-      console.log('rooms: ', this.io.adapter['rooms']);
+      // 접속중인 유저와 게임 룸
+      //console.log('rooms: ', this.io.adapter['rooms']);
       if (match) {
         const { gameType, player1, player2 } = match;
         console.log('match_found');
