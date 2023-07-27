@@ -72,10 +72,15 @@ export class GameEngine {
   }
 
   gameLoop(room: any) {
-    const interval = setInterval(() => {
-      room.emit('game', this.gameUpdate(room));
-    }, 1000 / 60);
-    room['interval'] = interval;
+    const ready_interval = setInterval(() => {
+      if (room['readyCount'] === 2) {
+        clearInterval(ready_interval);
+        const interval = setInterval(() => {
+          room.emit('game', this.gameUpdate(room));
+        }, 1000 / 60);
+        room['interval'] = interval;
+      }
+    }, 1000);
   }
 
   movePaddleLeft(socket: Socket) {
@@ -143,7 +148,6 @@ export class GameEngine {
     }
     player1['room'] = null;
     player2['room'] = null;
-    room.disconnectSockets(true);
   }
 
   private checkBoundaryCollision(room: any, ball: any) {

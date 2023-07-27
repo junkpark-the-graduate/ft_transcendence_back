@@ -79,6 +79,7 @@ export class GameGateway
         room['roomId'] = roomId;
         player1['room'] = room;
         player2['room'] = room;
+        room['readyCount'] = 0;
         room['type'] = gameType;
         room['player1'] = player1;
         room['player2'] = player2;
@@ -99,7 +100,9 @@ export class GameGateway
       socket['mmr'] = (await this.userService.findOne(socket['ftId']))['mmr'];
     } catch (error) {
       console.log('handleConnection error: ', error);
-      socket.disconnect();
+      setTimeout(() => {
+        socket.disconnect();
+      }, 500);
     }
   }
 
@@ -128,7 +131,7 @@ export class GameGateway
       return { isSuccess: false };
     }
 
-    console.log('socket[room]: ', socket['room']);
+    //console.log('socket[room]: ', socket['room']);
 
     if (!socket['room']) {
       const ftId = socket['ftId'];
@@ -185,6 +188,7 @@ export class GameGateway
 
   @SubscribeMessage('game_init')
   handleGameInit(@ConnectedSocket() socket: Socket) {
+    socket['room']['readyCount'] += 1;
     return socket['isPlayer1'];
   }
 
