@@ -129,6 +129,30 @@ export class UserService {
     return user.status;
   }
 
+  async updateMmr(id: number, mmr: number) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id: id,
+      },
+    });
+
+    user.mmr = mmr;
+
+    const updatedUser = await this.userRepository.save(user);
+
+    return updatedUser;
+  }
+
+  async getUserRanking(offset: number, limit: number) {
+    return await this.userRepository.find({
+      order: {
+        mmr: 'DESC',
+      },
+      skip: limit * offset,
+      take: limit,
+    });
+  }
+
   async remove(id: number) {
     return `This action removes a #${id} user`;
   }
