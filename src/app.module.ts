@@ -5,6 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { LoggerMiddleware } from './middleware/logger.middleware';
+import { ChatModule } from './chat/chat.module';
+import { ChannelModule } from './channel/channel.module';
 import { DummyModule } from './dummy/dummy.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -41,6 +43,10 @@ const typeOrmModuleOptions = {
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'dist', 'public'),
     }),
+    ChatModule,
+    DummyModule,
+    ChannelModule,
+    BlockModule,
   ],
   controllers: [],
   providers: [],

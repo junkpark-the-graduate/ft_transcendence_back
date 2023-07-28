@@ -8,22 +8,26 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { ChannelEntity } from './channel.entity';
 import { UserEntity } from 'src/user/user.entity';
-import { trace } from 'console';
 
 @Entity()
-export class BlockEntity {
+export class ChannelBannedMemberEntity {
   @PrimaryGeneratedColumn()
   @ApiProperty()
   id: number;
 
   @ApiProperty()
   @Column({ nullable: false })
-  userId: number;
+  channelId: number;
 
   @ApiProperty()
   @Column({ nullable: false })
-  blockingId: number;
+  userId: number;
+
+  @ApiProperty()
+  @Column({ default: true })
+  isBanned: boolean;
 
   @ApiProperty()
   @CreateDateColumn()
@@ -33,11 +37,13 @@ export class BlockEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => UserEntity, (user) => user.users)
+  @ManyToOne(() => ChannelEntity, (channel) => channel.channelBannedMembers, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'channelId' })
+  channel: ChannelEntity;
+
+  @ManyToOne(() => UserEntity, (user) => user.channelBannedMembers)
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
-
-  @ManyToOne(() => UserEntity, (blockingUser) => blockingUser.blockings)
-  @JoinColumn({ name: 'blockingId' })
-  blocking: UserEntity;
 }

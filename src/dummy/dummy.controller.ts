@@ -10,21 +10,40 @@ export class DummyController {
     private readonly dummyService: DummyService,
   ) {}
 
-  dummy = {
-    id: 1,
-    name: 'test1',
-    email: 'test1@gmail.com',
-    image: null,
-  };
+  private createDummyUser() {
+    const dummys = [];
+    for (let i = 1; i <= 10; i++) {
+      const dummy = {
+        id: i,
+        name: `test${i}`,
+        email: `test${i}@gmail.com`,
+        image: null,
+      };
+      dummys.push(dummy);
+    }
+    return dummys;
+  }
 
   @Post()
-  create() {
-    const dto = this.dummy as CreateUserDto;
-    return this.userService.create(dto);
+  async create() {
+    const dummys = this.createDummyUser();
+    const res = [];
+    let dto = null;
+    for (const dummy of dummys) {
+      dto = dummy as CreateUserDto;
+      res.push(await this.userService.create(dto));
+    }
+    return res;
   }
 
   @Get()
-  getDummyAccessToken() {
-    return this.dummyService.getDummyAccessToken(this.dummy.id);
+  async getDummyAccessToken() {
+    const dummys = this.createDummyUser();
+    const res = [];
+
+    for (const dummy of dummys) {
+      res.push(await this.dummyService.getDummyAccessToken(dummy.id));
+    }
+    return res;
   }
 }

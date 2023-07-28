@@ -2,28 +2,34 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   Entity,
   Column,
+  PrimaryColumn,
   PrimaryGeneratedColumn,
+  Unique,
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { ChannelEntity } from './channel.entity';
 import { UserEntity } from 'src/user/user.entity';
-import { trace } from 'console';
 
 @Entity()
-export class BlockEntity {
+export class ChannelMemberEntity {
   @PrimaryGeneratedColumn()
   @ApiProperty()
   id: number;
 
   @ApiProperty()
   @Column({ nullable: false })
-  userId: number;
+  channelId: number;
 
   @ApiProperty()
   @Column({ nullable: false })
-  blockingId: number;
+  userId: number;
+
+  @ApiProperty()
+  @Column({ default: false })
+  isAdmin: boolean;
 
   @ApiProperty()
   @CreateDateColumn()
@@ -33,11 +39,13 @@ export class BlockEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => UserEntity, (user) => user.users)
+  @ManyToOne(() => ChannelEntity, (channel) => channel.channelMembers, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'channelId' })
+  channel: ChannelEntity;
+
+  @ManyToOne(() => UserEntity, (user) => user.channelMembers)
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
-
-  @ManyToOne(() => UserEntity, (blockingUser) => blockingUser.blockings)
-  @JoinColumn({ name: 'blockingId' })
-  blocking: UserEntity;
 }

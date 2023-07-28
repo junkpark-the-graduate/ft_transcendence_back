@@ -2,28 +2,38 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   Entity,
   Column,
+  PrimaryColumn,
   PrimaryGeneratedColumn,
+  Unique,
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { ChannelEntity } from './channel.entity';
 import { UserEntity } from 'src/user/user.entity';
-import { trace } from 'console';
 
 @Entity()
-export class BlockEntity {
+export class ChannelMutedMemberEntity {
   @PrimaryGeneratedColumn()
   @ApiProperty()
   id: number;
+
+  @Column({ nullable: false })
+  @ApiProperty()
+  channelId: number;
 
   @ApiProperty()
   @Column({ nullable: false })
   userId: number;
 
   @ApiProperty()
-  @Column({ nullable: false })
-  blockingId: number;
+  @Column({ default: true })
+  isMuted: boolean;
+
+  @ApiProperty()
+  @Column({ default: 5 }) // 분 으로 단위 통일
+  mutedTime: number;
 
   @ApiProperty()
   @CreateDateColumn()
@@ -33,11 +43,13 @@ export class BlockEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => UserEntity, (user) => user.users)
+  @ManyToOne(() => ChannelEntity, (channel) => channel.channelMembers, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'channelId' })
+  channel: ChannelEntity;
+
+  @ManyToOne(() => UserEntity, (user) => user.channelMutedMembers)
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
-
-  @ManyToOne(() => UserEntity, (blockingUser) => blockingUser.blockings)
-  @JoinColumn({ name: 'blockingId' })
-  blocking: UserEntity;
 }
