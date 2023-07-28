@@ -10,7 +10,6 @@ import {
   PrimaryColumn,
   PrimaryGeneratedColumn,
   Unique,
-  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
