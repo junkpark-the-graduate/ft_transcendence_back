@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { GameRecordEntity } from 'src/game/entities/game-record.entity';
 import { ChannelBannedMemberEntity } from 'src/channel/entities/channel-banned-member.entity';
 import { ChannelMemberEntity } from 'src/channel/entities/channel-member.entity';
 import { ChannelMutedMemberEntity } from 'src/channel/entities/channel-muted-member.entity';
@@ -9,6 +10,7 @@ import {
   PrimaryColumn,
   PrimaryGeneratedColumn,
   Unique,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
@@ -42,6 +44,9 @@ export class UserEntity {
   @ApiProperty()
   @Column({ default: false })
   twoFactorEnabled: boolean;
+
+  @OneToMany(() => GameRecordEntity, (gameRecord) => gameRecord.userFtId)
+  gameRecords: GameRecordEntity[];
 
   @ApiProperty()
   @Column({

@@ -25,15 +25,14 @@ Table GameRecords {
   userId  int
   gameId  int
 }
-
+--------------------------------------
 Table Games {
   id                int [primary key]
   player1Id         int
   player2Id         int
-  gameStatus        string
   gameType          string
   gameResult        string
-  startTime         timestamp
+  createdAt         timestamp
 }
 --------------------------------------
 Table Follows {
@@ -112,5 +111,6 @@ Ref: Messages.channelId               > Channels.id
 
 Ref: GameRecords.userId               > Users.id
 Ref: GameRecords.gameId               > Games.id
+
 
 

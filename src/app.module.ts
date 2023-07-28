@@ -12,6 +12,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { FollowModule } from './follow/follow.module';
 import { BlockModule } from './block/block.module';
+import { GameModule } from './game/game.module';
 
 const typeOrmModuleOptions = {
   type: process.env.DB_TYPE,
@@ -35,6 +36,7 @@ const typeOrmModuleOptions = {
     TypeOrmModule.forRoot(typeOrmModuleOptions),
     AuthModule,
     UserModule,
+    GameModule,
     FollowModule,
     BlockModule,
     DummyModule,
