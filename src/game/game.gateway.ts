@@ -17,7 +17,7 @@ import { UserService } from 'src/user/user.service';
 import { GameType } from './game.constants';
 import { v4 } from 'uuid';
 
-@WebSocketGateway(4242, {
+@WebSocketGateway(parseInt(process.env.GAME_SOCKET_PORT), {
   namespace: 'game',
   cors: {
     origin: [
