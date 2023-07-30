@@ -17,11 +17,14 @@ import { ChannelBannedMemberEntity } from '../entities/channel-banned-member.ent
 import * as bcrypt from 'bcrypt';
 import { UserService } from 'src/user/user.service';
 import { UpdateChannelDto } from '../dto/update-channel.dto';
+import { ChannelKickService } from './channel-kick.service';
 
 @Injectable()
 export class ChannelService {
   constructor(
     private readonly userService: UserService,
+
+    private readonly channelKickService: ChannelKickService,
 
     @InjectRepository(ChannelEntity)
     private readonly channelRepository: Repository<ChannelEntity>,
@@ -189,10 +192,16 @@ export class ChannelService {
       where: {
         id: channelId,
       },
+      relations: ['channelMembers'],
     });
     if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
 
     this.checkIsChannelOwner(channel, userId);
+
+    for (const member of channel.channelMembers) {
+      if (member.userId === userId) continue;
+      await this.channelKickService.kick(userId, channelId, member.userId);
+    }
 
     await this.channelRepository.delete({ id: channelId });
   }

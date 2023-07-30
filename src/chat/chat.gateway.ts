@@ -43,7 +43,6 @@ export class ChatGateway
 
   constructor(
     private jwtService: JwtService,
-    private channelService: ChannelService,
     private chatService: ChatService, // private channels: ChatService['channels'],
   ) {
     this.logger.log('constructor');

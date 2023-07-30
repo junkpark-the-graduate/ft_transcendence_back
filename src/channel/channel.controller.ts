@@ -107,9 +107,6 @@ export class ChannelController {
     @Param('channelId') channelId: number,
     @Body() updateChannelDto: UpdateChannelDto,
   ): Promise<ChannelEntity> {
-    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!');
-    console.log(updateChannelDto.name);
-    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!');
     return this.channelService.update(req.user.id, channelId, updateChannelDto);
   }
 
