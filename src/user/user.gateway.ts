@@ -13,7 +13,7 @@ import { UserService } from './user.service';
 import { EUserStatus } from './user.entity';
 import { JwtService } from '@nestjs/jwt';
 
-@WebSocketGateway(4242, {
+@WebSocketGateway(parseInt(process.env.USER_SOCKET_PORT), {
   namespace: 'user',
   cors: {
     origin: [

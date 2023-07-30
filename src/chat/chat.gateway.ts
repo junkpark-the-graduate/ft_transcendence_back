@@ -29,8 +29,8 @@ interface Chat {
   socketId: string;
 }
 
-@WebSocketGateway(4242, {
-  namespace: 'chattings',
+@WebSocketGateway(parseInt(process.env.CHAT_SOCKET_PORT), {
+  namespace: 'chat',
   cors: {
     origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true,
