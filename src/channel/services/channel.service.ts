@@ -271,6 +271,7 @@ export class ChannelService {
       where: {
         channelId: channelId,
       },
+      relations: ['user'],
     });
     console.log(channelMembers);
     return channelMembers;
@@ -297,6 +298,7 @@ export class ChannelService {
       where: {
         channelId: channelId,
       },
+      relations: ['user'],
     });
     console.log(channelBannedMembers);
     return channelBannedMembers;
