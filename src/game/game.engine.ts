@@ -117,11 +117,11 @@ export class GameEngine {
     const { winner, loser } = result;
 
     // Elo system
-    const winner_rate = 1 / (10 ** ((loser['mmr'] - winner['mmr']) / 400) + 1);
-    winner['mmr'] += MMR_K * (1 - winner_rate);
-    loser['mmr'] -= MMR_K * (1 - winner_rate);
+    const mmrChange = 1 / (10 ** ((loser['mmr'] - winner['mmr']) / 400) + 1);
+    winner['mmr'] += MMR_K * (1 - mmrChange);
+    loser['mmr'] -= MMR_K * (1 - mmrChange);
 
-    console.log('change rate', MMR_K * (1 - winner_rate));
+    console.log('change rate', MMR_K * (1 - mmrChange));
     this.userService.updateMmr(winner['ftId'], Math.round(winner['mmr']));
     this.userService.updateMmr(loser['ftId'], Math.round(loser['mmr']));
   }
@@ -140,12 +140,37 @@ export class GameEngine {
     });
     this.gameRepository.save(game);
 
-    winner.emit('game_over', true);
-    loser.emit('game_over', false);
-
+    let mmrChange: number;
     if (room['type'] === 'ladder') {
-      this.updateMmr(result);
+      //this.updateMmr(result);const mmrChange = 1 / (10 ** ((loser['mmr'] - winner['mmr']) / 400) + 1);
+      mmrChange = Math.round(
+        MMR_K * (1 - 1 / (10 ** ((loser['mmr'] - winner['mmr']) / 400) + 1)),
+      );
+      winner['mmr'] += mmrChange;
+      loser['mmr'] -= mmrChange;
+      this.userService.updateMmr(winner['ftId'], winner['mmr']);
+      this.userService.updateMmr(loser['ftId'], loser['mmr']);
     }
+    winner.emit('game_over', {
+      gameResult: {
+        isWin: true,
+        score: room.score.player1 + ' : ' + room.score.player2,
+        mmr: Math.round(winner['mmr']),
+        mmrChange: room['type'] === 'ladder' ? mmrChange : 0,
+        playTime: new Date().getTime() - room['createdAt'].getTime(),
+      },
+    });
+    loser.emit('game_over', {
+      gameResult: {
+        isWin: false,
+        score: room.score.player1 + ' : ' + room.score.player2,
+        mmr: Math.round(winner['mmr']),
+        mmrChange: room['type'] === 'ladder' ? -mmrChange : 0,
+        playTime: new Date().getTime() - room['createdAt'].getTime(),
+      },
+    });
+    player1.leave(player1['room']['roomId']);
+    player2.leave(player2['room']['roomId']);
     player1['room'] = null;
     player2['room'] = null;
   }
