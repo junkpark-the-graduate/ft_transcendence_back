@@ -63,7 +63,7 @@ export class GameGateway
       this.gameRoomMap.delete(roomId);
     });
 
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       const match = this.gameMatchmaker.matchPlayers();
       // 접속중인 유저와 게임 룸
       //console.log('rooms: ', this.io.adapter['rooms']);
@@ -71,8 +71,14 @@ export class GameGateway
         const { gameType, player1, player2 } = match;
         console.log('match_found');
         const roomId = v4();
-        player1.emit('match_found', { roomId });
-        player2.emit('match_found', { roomId });
+        player1.emit('match_found', {
+          roomId,
+          opponent: await this.userService.findOne(player2['ftId']),
+        });
+        player2.emit('match_found', {
+          roomId,
+          opponent: await this.userService.findOne(player1['ftId']),
+        });
         player1.join(roomId);
         player2.join(roomId);
         const room = this.io.in(roomId);
@@ -193,7 +199,7 @@ export class GameGateway
   }
 
   @SubscribeMessage('cancel_matching')
-  handlecancelMatching(@ConnectedSocket() socket: Socket) {
+  handleCancelMatching(@ConnectedSocket() socket: Socket) {
     this.gameMatchmaker.removePlayer(socket);
   }
 
