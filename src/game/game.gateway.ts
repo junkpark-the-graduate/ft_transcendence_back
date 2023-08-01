@@ -10,7 +10,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { GameEngine } from './game.engine';
+import { GameEngine, Role } from './game.engine';
 import { JwtService } from '@nestjs/jwt';
 import { GameMatchmaker } from './game.matchmaker';
 import { UserService } from 'src/user/user.service';
@@ -66,7 +66,7 @@ export class GameGateway
     const interval = setInterval(async () => {
       const match = this.gameMatchmaker.matchPlayers();
       // 접속중인 유저와 게임 룸
-      // console.log('접속중인 유저와 게임 룸: ', this.io.adapter['rooms']);
+      console.log('접속중인 유저와 게임 룸: ', this.io.adapter['rooms']);
       if (match) {
         const { gameType, player1, player2 } = match;
         console.log('match_found');
@@ -75,6 +75,7 @@ export class GameGateway
           roomId,
           opponent: await this.userService.findOne(player2['ftId']),
         });
+        // TODO 필요한 데이터만 보내기
         player2.emit('match_found', {
           roomId,
           opponent: await this.userService.findOne(player1['ftId']),
@@ -82,6 +83,7 @@ export class GameGateway
         player1.join(roomId);
         player2.join(roomId);
         const room = this.io.in(roomId);
+
         room['roomId'] = roomId;
         player1['room'] = room;
         player2['room'] = room;
@@ -115,7 +117,7 @@ export class GameGateway
   handleDisconnect(@ConnectedSocket() socket: Socket) {
     this.logger.log(`Client disconnected: ${socket.id}`);
     const room = socket['room'];
-    if (room) {
+    if (room && socket['role'] !== Role.Spectator) {
       this.disconnectedUserMap.set(socket['ftId'], socket['room']);
     }
   }
@@ -131,38 +133,42 @@ export class GameGateway
   @SubscribeMessage('join_room')
   handleJoinRoom(@ConnectedSocket() socket: Socket, @MessageBody() data) {
     const { roomId } = data;
-    console.log('roomId', roomId);
+    //console.log('roomId', roomId);
     const room = this.gameRoomMap.get(roomId);
     if (!room) {
       return { isSuccess: false };
     }
 
-    //console.log('socket[room]: ', socket['room']);
-
     if (!socket['room']) {
       const ftId = socket['ftId'];
       // reconnection
       if (this.disconnectedUserMap.get(ftId)) {
-        //socket.emit('reconnection');
         this.disconnectedUserMap.delete(ftId);
         socket.join(room['roomId']);
         const disconnectSocket =
           room['player1'].ftId === ftId ? room['player1'] : room['player2'];
-        const isPlayer1: boolean = disconnectSocket.isPlayer1;
+        const role: Role = disconnectSocket['role'];
         socket['room'] = room;
         socket['paddle'] = disconnectSocket.paddle;
-        socket['isPlayer1'] = isPlayer1;
-        isPlayer1 ? (room['player1'] = socket) : (room['player2'] = socket);
+        socket['role'] = role;
+        role === Role.Player1
+          ? (room['player1'] = socket)
+          : (room['player2'] = socket);
         return { isSuccess: true };
       }
-      // 초대해서 들어온 경우
-      socket.join(roomId);
       socket['room'] = room;
-      socket['isPlayer1'] = false;
-      room['player2'] = socket;
-      room['type'] = 'friendly';
-      this.gameEngine.gameInit(room);
-      this.gameEngine.gameLoop(room);
+      socket.join(roomId);
+      // friendly game
+      if (room['readyCount'] !== 2) {
+        socket['role'] = Role.Player2;
+        room['player2'] = socket;
+        room['type'] = 'friendly';
+        this.gameEngine.gameInit(room);
+        this.gameEngine.gameLoop(room);
+      } else {
+        // Spectator
+        socket['role'] = Role.Spectator;
+      }
     }
     return { isSuccess: true };
   }
@@ -176,7 +182,8 @@ export class GameGateway
     room['player1'] = socket;
     socket.join(roomId);
     socket['room'] = room;
-    socket['isPlayer1'] = true;
+    socket['role'] = Role.Player1;
+    room['readyCount'] = 0;
     return roomId;
   }
 
@@ -194,8 +201,12 @@ export class GameGateway
 
   @SubscribeMessage('game_init')
   handleGameInit(@ConnectedSocket() socket: Socket) {
-    socket['room']['readyCount'] += 1;
-    return socket['isPlayer1'];
+    console.log('server game_init');
+    console.log(socket['role']);
+    if (socket['role'] !== Role.Spectator && socket['room']['readyCount'] < 2) {
+      socket['room']['readyCount'] += 1;
+    }
+    return socket['role'];
   }
 
   @SubscribeMessage('cancel_matching')
