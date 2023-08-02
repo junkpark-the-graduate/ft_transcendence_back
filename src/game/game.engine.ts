@@ -31,6 +31,12 @@ interface Game {
   };
 }
 
+export enum Role {
+  Player1,
+  Player2,
+  Spectator,
+}
+
 @Injectable()
 export class GameEngine {
   constructor(
@@ -67,8 +73,8 @@ export class GameEngine {
       y: 30,
     };
 
-    player1['isPlayer1'] = true;
-    player2['isPlayer1'] = false;
+    player1['role'] = Role.Player1;
+    player2['role'] = Role.Player2;
   }
 
   gameLoop(room: any) {
@@ -84,19 +90,19 @@ export class GameEngine {
   }
 
   movePaddleLeft(socket: Socket) {
-    if (socket['isPlayer1']) {
+    if (socket['role'] === Role.Player1) {
       if (socket['paddle'].x > -(PLANE_WIDTH / 2) + PADDLE_WIDTH / 2)
         socket['paddle'].x -= PADDLE_SPEED;
-    } else {
+    } else if (socket['role'] === Role.Player2) {
       if (socket['paddle'].x < PLANE_WIDTH / 2 - PADDLE_WIDTH / 2)
         socket['paddle'].x += PADDLE_SPEED;
     }
   }
   movePaddleRight(socket: Socket) {
-    if (socket['isPlayer1']) {
+    if (socket['role'] === Role.Player1) {
       if (socket['paddle'].x < PLANE_WIDTH / 2 - PADDLE_WIDTH / 2)
         socket['paddle'].x += PADDLE_SPEED;
-    } else {
+    } else if (socket['role'] === Role.Player2) {
       if (socket['paddle'].x > -(PLANE_WIDTH / 2) + PADDLE_WIDTH / 2)
         socket['paddle'].x -= PADDLE_SPEED;
     }
@@ -113,20 +119,7 @@ export class GameEngine {
     return null;
   }
 
-  private updateMmr(result: any) {
-    const { winner, loser } = result;
-
-    // Elo system
-    const winner_rate = 1 / (10 ** ((loser['mmr'] - winner['mmr']) / 400) + 1);
-    winner['mmr'] += MMR_K * (1 - winner_rate);
-    loser['mmr'] -= MMR_K * (1 - winner_rate);
-
-    console.log('change rate', MMR_K * (1 - winner_rate));
-    this.userService.updateMmr(winner['ftId'], Math.round(winner['mmr']));
-    this.userService.updateMmr(loser['ftId'], Math.round(loser['mmr']));
-  }
-
-  private endGame(room: any, result: any) {
+  private async endGame(room: any, result: any) {
     const { player1, player2 } = room;
     const { winner, loser } = result;
 
@@ -140,12 +133,37 @@ export class GameEngine {
     });
     this.gameRepository.save(game);
 
-    winner.emit('game_over', true);
-    loser.emit('game_over', false);
-
+    let mmrChange: number;
     if (room['type'] === 'ladder') {
-      this.updateMmr(result);
+      mmrChange = Math.round(
+        MMR_K * (1 - 1 / (10 ** ((loser['mmr'] - winner['mmr']) / 400) + 1)),
+      );
+      winner['mmr'] += mmrChange;
+      loser['mmr'] -= mmrChange;
+      this.userService.updateMmr(winner['ftId'], winner['mmr']);
+      this.userService.updateMmr(loser['ftId'], loser['mmr']);
     }
+
+    // 룸 다 나가있는 상태니까
+    room.emit('game_over', {
+      gameResult: {
+        playTime: new Date().getTime() - room['createdAt'].getTime(),
+        score: room.score.player1 + ' : ' + room.score.player2,
+        player1: {
+          ...(await this.userService.findOne(player1['ftId'])),
+          isWin: winner === player1,
+          mmr: Math.round(player1['mmr']),
+          mmrChange: room['type'] === 'ladder' ? mmrChange : 0,
+        },
+        player2: {
+          ...(await this.userService.findOne(player2['ftId'])),
+          isWin: winner === player2,
+          mmr: Math.round(player2['mmr']),
+          mmrChange: room['type'] === 'ladder' ? mmrChange : 0,
+        },
+      },
+    });
+    room.socketsLeave(room['roomId']);
     player1['room'] = null;
     player2['room'] = null;
   }
