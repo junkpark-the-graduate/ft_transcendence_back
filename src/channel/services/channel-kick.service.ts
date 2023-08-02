@@ -14,6 +14,7 @@ import { ChannelService } from './channel.service';
 @Injectable()
 export class ChannelKickService {
   constructor(
+    @Inject(forwardRef(() => ChannelService))
     private channelService: ChannelService,
 
     @InjectRepository(ChannelMemberEntity)
