@@ -15,6 +15,7 @@ import {
 } from './game.constants';
 import { GameEntity } from './entities/game.entity';
 import { UserService } from 'src/user/user.service';
+import { GameService } from './game.service';
 
 interface Game {
   paddle1: {
@@ -42,6 +43,7 @@ export class GameEngine {
   constructor(
     @InjectRepository(GameEntity)
     private readonly gameRepository: Repository<GameEntity>,
+    private gameService: GameService,
     private userService: UserService,
   ) {}
 
@@ -124,14 +126,13 @@ export class GameEngine {
     const { winner, loser } = result;
 
     clearInterval(room['interval']);
-    const game = this.gameRepository.create({
+    this.gameService.saveGameResult({
       player1Id: player1['ftId'],
       player2Id: player2['ftId'],
       gameType: room['type'],
       gameResult: winner === player1 ? 'player1' : 'player2',
       createdAt: room['createdAt'],
     });
-    this.gameRepository.save(game);
 
     let mmrChange: number;
     if (room['type'] === 'ladder') {
