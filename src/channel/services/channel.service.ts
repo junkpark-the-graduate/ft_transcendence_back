@@ -277,6 +277,20 @@ export class ChannelService {
     return channelMembers;
   }
 
+  async findAllNonChannelMember(
+    channelId: number,
+  ): Promise<ChannelMemberEntity[]> {
+    // TODO: 채널관리만 조회할 수 있도록
+    const channelMembers = await this.channelMemberRepository.find({
+      where: {
+        channelId: channelId,
+      },
+      relations: ['user'],
+    });
+    console.log(channelMembers);
+    return channelMembers;
+  }
+
   async findAllChannelMutedMember(
     channelId: number,
   ): Promise<ChannelMutedMemberEntity[]> {

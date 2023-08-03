@@ -12,7 +12,7 @@ export class DummyController {
 
   private createDummyUser() {
     const dummys = [];
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= 100; i++) {
       const dummy = {
         id: i,
         name: `test${i}`,

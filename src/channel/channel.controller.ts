@@ -187,13 +187,13 @@ export class ChannelController {
 
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(ClassSerializerInterceptor)
-  @Post(':channelId/member/:memberId')
+  @Post(':channelId/invited-member')
   @ApiOperation({ summary: '채널 초대 API', description: '채널 초대' })
   @ApiResponse({ status: 201, description: 'Created' })
   invite(
     @Request() req,
     @Param('channelId') channelId: number,
-    @Param('memberId') memberId: number,
+    @Query('memberId') memberId: number,
   ) {
     const createChannelMemberDto: CreateChannelMemberDto = {
       channelId,
@@ -201,6 +201,7 @@ export class ChannelController {
       isAdmin: false,
       password: null,
     };
+    console.log('createChannelMemberDto', createChannelMemberDto);
     return this.channelMemberService.invite(
       req.user.id,
       createChannelMemberDto,

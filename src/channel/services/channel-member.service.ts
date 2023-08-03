@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -18,7 +19,7 @@ import { UserEntity } from 'src/user/user.entity';
 @Injectable()
 export class ChannelMemberService {
   constructor(
-    private usreService: UserService,
+    private userService: UserService,
 
     private channelService: ChannelService,
 
@@ -101,7 +102,7 @@ export class ChannelMemberService {
   }
 
   async invite(userId: number, createChannelMemberDto: CreateChannelMemberDto) {
-    const member: UserEntity = await this.usreService.findOne(
+    const member: UserEntity = await this.userService.findOne(
       createChannelMemberDto.userId,
     );
     if (!member) throw new NotFoundException('존재하지 않는 사용자입니다.');
@@ -117,16 +118,15 @@ export class ChannelMemberService {
           member.userId === createChannelMemberDto.userId,
       )
     ) {
-      return channel;
+      throw new ConflictException('이미 채널에 참여한 사용자입니다.');
     }
 
-    this.channelService.checkIsChannelMember(channel, userId);
-    this.channelService.checkIsChannelAdmin(channel, userId);
+    this.channelService.checkIsChannelOwner(channel, userId);
 
     const channelMember: ChannelMemberEntity =
       this.channelMemberRepository.create(createChannelMemberDto);
     await this.channelMemberRepository.save(channelMember);
 
-    return channel;
+    return channelMember;
   }
 }

@@ -156,4 +156,22 @@ export class UserService {
   async remove(id: number) {
     return `This action removes a #${id} user`;
   }
+
+  async getPaginatedUsers(options: {
+    page: number;
+    limit: number;
+  }): Promise<UserEntity[]> {
+    const { limit, page } = options;
+    const skippedItems = (page - 1) * limit;
+
+    const users = await this.userRepository.find({
+      order: {
+        id: 'ASC',
+      },
+      skip: skippedItems,
+      take: limit,
+    });
+
+    return users;
+  }
 }

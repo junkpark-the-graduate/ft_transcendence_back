@@ -84,6 +84,7 @@ export class ChatService {
   }
 
   getMemberInChannel(channelId: string, userId: number) {
+    if (!this.channels[channelId]) return null;
     return this.channels[channelId].connectedMembers.get(userId);
   }
 
