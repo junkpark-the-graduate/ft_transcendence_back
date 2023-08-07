@@ -106,7 +106,7 @@ export class ChannelService {
       throw new NotFoundException('존재하지 않는 사용자입니다.');
     }
 
-    const tmp = await this.channelRepository
+    const alreadyExistChannel = await this.channelRepository
       .createQueryBuilder('channel')
       .innerJoinAndSelect('channel.channelMembers', 'channelMember')
       .where('channel.type = :type', { type: EChannelType.direct })
@@ -122,8 +122,8 @@ export class ChannelService {
       )
       .getOne();
 
-    if (tmp) {
-      throw new ConflictException('이미 존재하는 direct 채널입니다.');
+    if (alreadyExistChannel) {
+      return alreadyExistChannel;
     }
 
     const channel = await this.entityManager.transaction(async (manager) => {
