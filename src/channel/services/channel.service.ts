@@ -8,7 +8,7 @@ import {
 
 import { CreateChannelDto } from '../dto/create-channel.dto';
 import { CreateChannelMemberDto } from '../dto/create-channel-member.dto';
-import { Brackets, EntityManager, Repository } from 'typeorm';
+import { Brackets, EntityManager, In, Not, Repository } from 'typeorm';
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import { ChannelEntity, EChannelType } from '../entities/channel.entity';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
@@ -137,19 +137,33 @@ export class ChannelService {
         ...createChannelDto,
       });
       await manager.save(channel);
+      console.log('channel save ', channel);
+      const createChannelMemberDto1: CreateChannelMemberDto = {
+        channelId: channel.id,
+        userId: userId,
+        isAdmin: true,
+        password: null,
+      };
+      const channelMember1 = this.channelMemberRepository.create(
+        createChannelMemberDto1,
+      );
 
-      const createChannelMemberDto: CreateChannelMemberDto = {
+      const createChannelMemberDto2: CreateChannelMemberDto = {
         channelId: channel.id,
         userId: memberId,
         isAdmin: true,
         password: null,
       };
-      const channelMember = this.channelMemberRepository.create(
-        createChannelMemberDto,
+      const channelMember2 = this.channelMemberRepository.create(
+        createChannelMemberDto2,
       );
-      await manager.save(channelMember);
+
+      await manager.save(channelMember1);
+      await manager.save(channelMember2);
+
       return channel;
     });
+
     return channel;
   }
 
@@ -208,7 +222,11 @@ export class ChannelService {
 
   async findAll(): Promise<ChannelEntity[]> {
     try {
-      const channels = await this.channelRepository.find();
+      const channels = await this.channelRepository.find({
+        where: {
+          type: In([EChannelType.public, EChannelType.protected]),
+        },
+      });
       return channels;
     } catch (err) {
       console.log(err);
@@ -243,7 +261,13 @@ export class ChannelService {
       .createQueryBuilder('channel')
       .innerJoin('channel.channelMembers', 'channelMember')
       .where('channelMember.userId = :userId', { userId })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('channel.type != :direct', { direct: EChannelType.direct });
+        }),
+      )
       .getMany();
+
     return channels;
   }
 
