@@ -95,6 +95,18 @@ export class ChannelController {
 
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(ClassSerializerInterceptor)
+  @Get('/direct/joined')
+  @ApiOperation({
+    summary: '유저가 가입한 dm 조회 API',
+    description: '유저가 가입한 모든 dm  조회',
+  })
+  @ApiResponse({ status: 200, description: 'OK' })
+  findJoinedDirectChannel(@Request() req) {
+    return this.channelService.findJoinedDirectChannel(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Patch(':channelId')
   @ApiOperation({
     summary: '채널 수정 API',

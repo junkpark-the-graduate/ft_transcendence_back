@@ -271,6 +271,21 @@ export class ChannelService {
     return channels;
   }
 
+  async findJoinedDirectChannel(userId: number) {
+    const directChannels = await this.channelRepository
+      .createQueryBuilder('channel')
+      .innerJoin('channel.channelMembers', 'channelMember')
+      .where('channelMember.userId = :userId', { userId })
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('channel.type = :direct', { direct: EChannelType.direct });
+        }),
+      )
+      .getMany();
+
+    return directChannels;
+  }
+
   async findOneChannelMember(channelId: number | string, userId: number) {
     if (typeof channelId === 'string') channelId = parseInt(channelId);
 
