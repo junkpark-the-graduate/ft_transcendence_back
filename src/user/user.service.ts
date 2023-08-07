@@ -143,13 +143,11 @@ export class UserService {
     return updatedUser;
   }
 
-  async getUserRanking(offset: number, limit: number) {
+  async getUserRanking() {
     return await this.userRepository.find({
       order: {
         mmr: 'DESC',
       },
-      skip: limit * offset,
-      take: limit,
     });
   }
 
