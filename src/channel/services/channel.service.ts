@@ -174,6 +174,10 @@ export class ChannelService {
   ): Promise<ChannelEntity> {
     const channel: ChannelEntity = await this.findOne(channelId);
 
+    if (channel.type === EChannelType.direct) {
+      throw new InternalServerErrorException('DM은 수정할 수 없습니다.');
+    }
+
     this.checkIsChannelOwner(channel, userId);
 
     if (updateChannelDto.name) {
@@ -256,34 +260,30 @@ export class ChannelService {
     return channel;
   }
 
-  async findJoinedChannel(userId: number) {
-    const channels = await this.channelRepository
-      .createQueryBuilder('channel')
-      .innerJoin('channel.channelMembers', 'channelMember')
-      .where('channelMember.userId = :userId', { userId })
-      .andWhere(
-        new Brackets((qb) => {
-          qb.where('channel.type != :direct', { direct: EChannelType.direct });
-        }),
-      )
-      .getMany();
+  async findJoinedChannel(userId: number): Promise<ChannelEntity[]> {
+    const channels = await this.channelRepository.find({
+      where: {
+        type: Not(EChannelType.direct),
+      },
+      relations: ['channelMembers', 'channelMembers.user'],
+    });
 
-    return channels;
+    return channels.filter((channel) =>
+      channel.channelMembers.some((member) => member.userId === userId),
+    );
   }
 
-  async findJoinedDirectChannel(userId: number) {
-    const directChannels = await this.channelRepository
-      .createQueryBuilder('channel')
-      .innerJoin('channel.channelMembers', 'channelMember')
-      .where('channelMember.userId = :userId', { userId })
-      .andWhere(
-        new Brackets((qb) => {
-          qb.where('channel.type = :direct', { direct: EChannelType.direct });
-        }),
-      )
-      .getMany();
+  async findJoinedDirectChannel(userId: number): Promise<ChannelEntity[]> {
+    const directChannels = await this.channelRepository.find({
+      where: {
+        type: EChannelType.direct,
+      },
+      relations: ['channelMembers', 'channelMembers.user'],
+    });
 
-    return directChannels;
+    return directChannels.filter((channel) =>
+      channel.channelMembers.some((member) => member.userId === userId),
+    );
   }
 
   async findOneChannelMember(channelId: number | string, userId: number) {
