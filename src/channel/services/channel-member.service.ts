@@ -87,7 +87,10 @@ export class ChannelMemberService {
       deleteChannelMemberDto.userId,
     );
 
-    if (deleteChannelMemberDto.userId === channel.ownerId) {
+    if (
+      channel.type !== EChannelType.direct &&
+      deleteChannelMemberDto.userId === channel.ownerId
+    ) {
       this.channelService.delete(
         deleteChannelMemberDto.userId,
         deleteChannelMemberDto.channelId,
@@ -99,6 +102,7 @@ export class ChannelMemberService {
         deleteChannelMemberDto.userId,
       );
     }
+    return channel;
   }
 
   async invite(userId: number, createChannelMemberDto: CreateChannelMemberDto) {
