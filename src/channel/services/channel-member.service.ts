@@ -25,6 +25,9 @@ export class ChannelMemberService {
 
     private chatService: ChatService,
 
+    @InjectRepository(ChannelEntity)
+    private readonly channelRepository: Repository<ChannelEntity>,
+
     @InjectRepository(ChannelMemberEntity)
     private readonly channelMemberRepository: Repository<ChannelMemberEntity>,
   ) {}
@@ -77,7 +80,7 @@ export class ChannelMemberService {
   }
 
   async exit(deleteChannelMemberDto: DeleteChannelMemberDto) {
-    const channel = await this.channelService.findOne(
+    let channel = await this.channelService.findOne(
       deleteChannelMemberDto.channelId,
       ['channelMembers'],
     );
@@ -87,11 +90,12 @@ export class ChannelMemberService {
       deleteChannelMemberDto.userId,
     );
 
+    //TODO 소유자일때 체널폭파 안시킴
     if (
       channel.type !== EChannelType.direct &&
       deleteChannelMemberDto.userId === channel.ownerId
     ) {
-      this.channelService.delete(
+      await this.channelService.delete(
         deleteChannelMemberDto.userId,
         deleteChannelMemberDto.channelId,
       );
@@ -101,6 +105,17 @@ export class ChannelMemberService {
         deleteChannelMemberDto.channelId.toString(),
         deleteChannelMemberDto.userId,
       );
+    }
+
+    channel.channelMembers = channel.channelMembers.filter(
+      // 위에서 delete 된 member를 channelMembers에서 제거
+      (member) => member.userId !== deleteChannelMemberDto.userId,
+    );
+
+    console.log('channelMember.length', channel.channelMembers.length);
+
+    if (channel.channelMembers.length === 0) {
+      await this.channelRepository.delete({ id: channel.id });
     }
     return channel;
   }

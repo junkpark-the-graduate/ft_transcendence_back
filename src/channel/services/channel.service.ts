@@ -106,23 +106,50 @@ export class ChannelService {
       throw new NotFoundException('존재하지 않는 사용자입니다.');
     }
 
-    const alreadyExistChannel = await this.channelRepository
-      .createQueryBuilder('channel')
-      .innerJoinAndSelect('channel.channelMembers', 'channelMember')
-      .where('channel.type = :type', { type: EChannelType.direct })
-      .andWhere(
-        new Brackets((qb) => {
-          qb.where(
-            '(channel.ownerId = :ownerId AND channelMember.userId = :memberId)',
-          ).orWhere(
-            '(channel.ownerId = :memberId AND channelMember.userId = :ownerId)',
-          );
-        }),
-        { ownerId: userId, memberId: memberId },
-      )
-      .getOne();
+    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1');
+    //tmp1, tmp2한번에 처리하기 QueryBuilder 안쓰고
+    const alreadyExistChannel = await this.channelRepository.findOne({
+      where: [
+        {
+          name: `${userId}-${memberId}`,
+        },
+        {
+          name: `${memberId}-${userId}`,
+        },
+      ],
+      relations: ['channelMembers'],
+    });
+    console.log('alreadyExistChannel', alreadyExistChannel);
 
-    if (alreadyExistChannel) {
+    if (alreadyExistChannel?.channelMembers.length === 2) {
+      console.log(
+        'alreadyExistChannel.channelMembers.length',
+        alreadyExistChannel.channelMembers.length,
+      );
+      return alreadyExistChannel;
+    }
+    if (alreadyExistChannel?.channelMembers.length === 1) {
+      console.log(
+        'alreadyExistChannel.channelMembers.length',
+        alreadyExistChannel.channelMembers.length,
+      );
+
+      const isUserExist: ChannelMemberEntity =
+        alreadyExistChannel.channelMembers.find(
+          (channelMember) => channelMember.userId === userId,
+        );
+      console.log('isUserExist', isUserExist);
+      const createChannelMemberDto: CreateChannelMemberDto = {
+        channelId: alreadyExistChannel.id,
+        userId: isUserExist ? memberId : userId,
+        isAdmin: true,
+        password: null,
+      };
+      console.log('createMemberDto ', createChannelMemberDto);
+      const channelMember = this.channelMemberRepository.create(
+        createChannelMemberDto,
+      );
+      await this.channelMemberRepository.save(channelMember);
       return alreadyExistChannel;
     }
 
