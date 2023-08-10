@@ -120,6 +120,7 @@ export class GameGateway
     if (room && socket['role'] !== Role.Spectator) {
       this.disconnectedUserMap.set(socket['ftId'], socket['room']);
     }
+    this.gameMatchmaker.removePlayer(socket);
   }
 
   @SubscribeMessage('reconnect')

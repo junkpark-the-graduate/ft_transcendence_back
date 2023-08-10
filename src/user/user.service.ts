@@ -49,6 +49,9 @@ export class UserService {
         id: id,
       },
     });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     return user;
   }
 
@@ -149,6 +152,22 @@ export class UserService {
         mmr: 'DESC',
       },
     });
+  }
+
+  async getUserRankingById(id: number) {
+    const ranking = await this.userRepository.find({
+      order: {
+        mmr: 'DESC',
+      },
+    });
+
+    const userRanking = ranking.findIndex((user) => user.id === id);
+
+    if (userRanking === -1) {
+      throw new NotFoundException('User not found');
+    }
+
+    return { ranking: userRanking + 1 };
   }
 
   async remove(id: number) {
