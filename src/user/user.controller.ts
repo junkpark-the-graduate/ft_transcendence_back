@@ -22,6 +22,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOperation,
   ApiProperty,
   ApiQuery,
@@ -32,6 +33,15 @@ import {
 import { UserEntity } from './user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Not } from 'typeorm';
+
+class UserRanking {
+  @ApiProperty({
+    example: 1,
+    description: '랭킹',
+  })
+  ranking: number;
+}
 
 @Controller('user')
 @ApiTags('user')
@@ -83,6 +93,24 @@ export class UserController {
   })
   getUserRanking() {
     return this.userService.getUserRanking();
+  }
+
+  @Get('/ranking/:id')
+  @ApiOperation({
+    summary: ' 특정 유저 랭킹 조회 API',
+    description: 'id를 사용해 특정 유저의 랭킹 조회',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'OK',
+    type: UserRanking,
+  })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  async getUserRankingById(
+    @Param('id', new ParseIntPipe()) id: number,
+  ): Promise<UserRanking> {
+    console.log(id);
+    return await this.userService.getUserRankingById(id);
   }
 
   @Get('/:id')
