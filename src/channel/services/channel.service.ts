@@ -301,16 +301,31 @@ export class ChannelService {
   }
 
   async findJoinedDirectChannel(userId: number): Promise<ChannelEntity[]> {
-    const directChannels = await this.channelRepository.find({
+    let directChannels = await this.channelRepository.find({
       where: {
         type: EChannelType.direct,
       },
       relations: ['channelMembers', 'channelMembers.user'],
     });
 
-    return directChannels.filter((channel) =>
+    directChannels = directChannels.filter((channel) =>
       channel.channelMembers.some((member) => member.userId === userId),
     );
+
+    const updatedDirectChannels = await Promise.all(
+      directChannels.map(async (channel) => {
+        const channelMemberIds = channel.name
+          .split('-')
+          .map((id: string) => parseInt(id));
+        const memberId = channelMemberIds.find((id: number) => id !== userId);
+
+        const member = await this.userService.findOne(memberId);
+        channel.name = member.name;
+        return channel;
+      }),
+    );
+
+    return updatedDirectChannels;
   }
 
   async findOneChannelMember(channelId: number | string, userId: number) {
