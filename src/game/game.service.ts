@@ -50,14 +50,6 @@ export class GameService {
   ): Promise<GameEntity[]> {
     const { sort, gameType, limit, offset } = gameQueryDto;
 
-    // TODO userEntity의 gameRecords 활용
-    //const userEntity = await this.userService.findOne({ // 없으면 알아서 떤질거고
-    //  where: {
-    //    id: id,
-    //  },
-    //});
-    //const gameRecordEntities = userEntity.gameRecords;
-
     const gameRecordEntities = await this.gameRecordRepository.find({
       where: {
         userFtId: id,
@@ -67,6 +59,7 @@ export class GameService {
     const gameIds = gameRecordEntities.map((gameRecordEntity) => {
       return gameRecordEntity.gameId;
     });
+
     let gameEntities = await this.gameRepository.findBy({
       id: In(gameIds),
       gameType: gameType,

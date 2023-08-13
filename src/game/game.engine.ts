@@ -15,6 +15,7 @@ import {
 } from './game.constants';
 import { GameEntity } from './entities/game.entity';
 import { UserService } from 'src/user/user.service';
+import { GameService } from './game.service';
 
 interface Game {
   paddle1: {
@@ -42,6 +43,7 @@ export class GameEngine {
   constructor(
     @InjectRepository(GameEntity)
     private readonly gameRepository: Repository<GameEntity>,
+    private gameService: GameService,
     private userService: UserService,
   ) {}
 
@@ -124,14 +126,13 @@ export class GameEngine {
     const { winner, loser } = result;
 
     clearInterval(room['interval']);
-    const game = this.gameRepository.create({
+    this.gameService.saveGameResult({
       player1Id: player1['ftId'],
       player2Id: player2['ftId'],
       gameType: room['type'],
       gameResult: winner === player1 ? 'player1' : 'player2',
       createdAt: room['createdAt'],
     });
-    this.gameRepository.save(game);
 
     let mmrChange: number;
     if (room['type'] === 'ladder') {
@@ -144,19 +145,22 @@ export class GameEngine {
       this.userService.updateMmr(loser['ftId'], loser['mmr']);
     }
 
-    // 룸 다 나가있는 상태니까
+    const player1Data = await this.userService.findOne(player1['ftId']);
+    const player2Data = await this.userService.findOne(player2['ftId']);
     room.emit('game_over', {
       gameResult: {
+        gameType: room['type'],
+        gameWinner: winner === player1 ? player1Data.name : player2Data.name,
         playTime: new Date().getTime() - room['createdAt'].getTime(),
         score: room.score.player1 + ' : ' + room.score.player2,
         player1: {
-          ...(await this.userService.findOne(player1['ftId'])),
+          ...player1Data,
           isWin: winner === player1,
           mmr: Math.round(player1['mmr']),
           mmrChange: room['type'] === 'ladder' ? mmrChange : 0,
         },
         player2: {
-          ...(await this.userService.findOne(player2['ftId'])),
+          ...player2Data,
           isWin: winner === player2,
           mmr: Math.round(player2['mmr']),
           mmrChange: room['type'] === 'ladder' ? mmrChange : 0,

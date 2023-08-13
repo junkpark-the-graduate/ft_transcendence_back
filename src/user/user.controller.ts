@@ -22,6 +22,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOperation,
   ApiProperty,
   ApiQuery,
@@ -32,6 +33,15 @@ import {
 import { UserEntity } from './user.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Not } from 'typeorm';
+
+class UserRanking {
+  @ApiProperty({
+    example: 1,
+    description: '랭킹',
+  })
+  ranking: number;
+}
 
 @Controller('user')
 @ApiTags('user')
@@ -85,30 +95,32 @@ export class UserController {
     summary: '랭킹 조회 API',
     description: '랭킹 조회',
   })
-  @ApiQuery({
-    name: 'offset',
-    required: false,
-    description:
-      '보고 싶은 페이지를 넣습니다. 기본적으로 0페이지를 보여줍니다.',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    description:
-      '한 페이지에 보여줄 유저 수를 넣습니다. 기본적으로 10개를 보여줍니다.',
-  })
   @ApiResponse({
     status: 200,
     description: 'OK',
     type: UserEntity,
     isArray: true,
   })
-  getUserRanking(
-    @Query('offset', new DefaultValuePipe(0), ParseIntPipe)
-    offset: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
-  ) {
-    return this.userService.getUserRanking(offset, limit);
+  getUserRanking() {
+    return this.userService.getUserRanking();
+  }
+
+  @Get('/ranking/:id')
+  @ApiOperation({
+    summary: ' 특정 유저 랭킹 조회 API',
+    description: 'id를 사용해 특정 유저의 랭킹 조회',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'OK',
+    type: UserRanking,
+  })
+  @ApiNotFoundResponse({ description: 'User not found' })
+  async getUserRankingById(
+    @Param('id', new ParseIntPipe()) id: number,
+  ): Promise<UserRanking> {
+    console.log(id);
+    return await this.userService.getUserRankingById(id);
   }
 
   @Get('/:id')

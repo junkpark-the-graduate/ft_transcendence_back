@@ -49,6 +49,9 @@ export class UserService {
         id: id,
       },
     });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
     return user;
   }
 
@@ -143,14 +146,28 @@ export class UserService {
     return updatedUser;
   }
 
-  async getUserRanking(offset: number, limit: number) {
+  async getUserRanking() {
     return await this.userRepository.find({
       order: {
         mmr: 'DESC',
       },
-      skip: limit * offset,
-      take: limit,
     });
+  }
+
+  async getUserRankingById(id: number) {
+    const ranking = await this.userRepository.find({
+      order: {
+        mmr: 'DESC',
+      },
+    });
+
+    const userRanking = ranking.findIndex((user) => user.id === id);
+
+    if (userRanking === -1) {
+      throw new NotFoundException('User not found');
+    }
+
+    return { ranking: userRanking + 1 };
   }
 
   async remove(id: number) {

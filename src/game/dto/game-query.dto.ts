@@ -18,6 +18,7 @@ export class GameQueryDto {
   @ApiProperty({
     description:
       '한 페이지에 보여줄 게임 수를 넣습니다. 기본적으로 10개를 보여줍니다.',
+    required: false,
   })
   limit: number = 10;
 
