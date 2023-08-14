@@ -16,6 +16,7 @@ import {
 } from 'typeorm';
 import { BlockEntity } from '../block/block.entity';
 import { ChatEntity } from 'src/chat/chat.entity';
+import { FollowEntity } from 'src/follow/follow.entity';
 
 export enum EUserStatus {
   offline,
@@ -94,4 +95,10 @@ export class UserEntity {
 
   @OneToMany(() => BlockEntity, (blockedUser) => blockedUser.blocking)
   blockings: BlockEntity[];
+
+  @OneToMany(() => FollowEntity, (followedUser) => followedUser.user)
+  usersForFollow: FollowEntity[];
+
+  @OneToMany(() => FollowEntity, (followedUser) => followedUser.blocking)
+  followings: FollowEntity[];
 }

@@ -9,7 +9,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { UserEntity } from 'src/user/user.entity';
-import { trace } from 'console';
 
 @Entity()
 export class BlockEntity {
