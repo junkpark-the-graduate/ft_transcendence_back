@@ -95,6 +95,18 @@ export class ChannelController {
 
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(ClassSerializerInterceptor)
+  @Get('/direct/joined')
+  @ApiOperation({
+    summary: '유저가 가입한 dm 조회 API',
+    description: '유저가 가입한 모든 dm  조회',
+  })
+  @ApiResponse({ status: 200, description: 'OK' })
+  findJoinedDirectChannel(@Request() req) {
+    return this.channelService.findJoinedDirectChannel(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Patch(':channelId')
   @ApiOperation({
     summary: '채널 수정 API',
@@ -187,13 +199,13 @@ export class ChannelController {
 
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(ClassSerializerInterceptor)
-  @Post(':channelId/member/:memberId')
+  @Post(':channelId/invited-member')
   @ApiOperation({ summary: '채널 초대 API', description: '채널 초대' })
   @ApiResponse({ status: 201, description: 'Created' })
   invite(
     @Request() req,
     @Param('channelId') channelId: number,
-    @Param('memberId') memberId: number,
+    @Query('memberId') memberId: number,
   ) {
     const createChannelMemberDto: CreateChannelMemberDto = {
       channelId,
@@ -201,6 +213,7 @@ export class ChannelController {
       isAdmin: false,
       password: null,
     };
+    console.log('createChannelMemberDto', createChannelMemberDto);
     return this.channelMemberService.invite(
       req.user.id,
       createChannelMemberDto,

@@ -15,6 +15,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { BlockEntity } from '../block/block.entity';
+import { ChatEntity } from 'src/chat/chat.entity';
 
 export enum EUserStatus {
   offline,
@@ -66,6 +67,9 @@ export class UserEntity {
   @ApiProperty()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => ChatEntity, (chat) => chat.user)
+  chats: ChatEntity[];
 
   @OneToMany(() => ChannelEntity, (channel) => channel.user)
   channels: ChannelEntity[];

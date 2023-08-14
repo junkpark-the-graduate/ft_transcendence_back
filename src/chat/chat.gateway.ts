@@ -20,13 +20,22 @@ import { JwtService } from '@nestjs/jwt';
 import { ChannelService } from 'src/channel/services/channel.service';
 import { ChatService } from './chat.service';
 import { DeleteChannelMutedMemberDto } from 'src/channel/dto/delete-channel-muted-member.dto';
+import { ChatEntity } from './chat.entity';
 // import { JwtPayload } from 'src/auth/jwt-payload.interface'; // any 타입 대신 사용할수도
 
-interface Chat {
-  userId: number;
-  username: string;
+interface IUser {
+  id: number;
+  image: string;
+  name: string;
+}
+
+interface IChat {
   message: string;
-  socketId: string;
+  user: IUser;
+}
+
+interface ChatHistoryRequest {
+  page: number;
 }
 
 @WebSocketGateway(parseInt(process.env.CHAT_SOCKET_PORT), {
@@ -95,28 +104,49 @@ export class ChatGateway
 
   @UseGuards(WsJwtGuard)
   @SubscribeMessage('submit_chat')
-  handleSubmitChat(
-    @MessageBody() chat: Chat,
+  async handleSubmitChat(
+    @MessageBody() chat: IChat,
     @ConnectedSocket() socket: Socket,
   ) {
     const channelId = socket.handshake.query.channelId as string;
     const { userId } = socket.data;
 
-    const member = this.chatService.getMemberInChannel(channelId, userId);
+    const member = await this.chatService.getMemberInChannel(channelId, userId);
 
     if (this.chatService.isMutedMember(channelId, userId)) {
       socket.emit('muted');
       return;
     } else {
       this.chatService.removeMutedMember(channelId, userId);
+      this.chatService.saveMessage(userId, channelId, chat.message);
     }
 
     socket.to(channelId).emit('new_chat', {
-      userId: member.id,
-      username: member.name,
       message: chat.message,
-      socketId: socket.id,
+      user: {
+        id: member.id,
+        name: member.name,
+        image: member.image,
+      },
     });
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('get_chat_history')
+  async handleLoadChat(
+    @MessageBody() chatHistoryRequest: ChatHistoryRequest,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    const channelId = socket.handshake.query.channelId as string;
+    const { userId } = socket.data;
+    const { page } = chatHistoryRequest;
+
+    const chatHistory: ChatEntity[] = await this.chatService.getChatHistory(
+      parseInt(channelId),
+      page,
+    );
+
+    socket.emit('chat_history', { chatHistory });
   }
 
   public async kickMember(channelId: number, userId: number) {

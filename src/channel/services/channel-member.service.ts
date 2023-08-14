@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -6,7 +7,7 @@ import {
 import { CreateChannelMemberDto } from '../dto/create-channel-member.dto';
 import { DeleteChannelMemberDto } from '../dto/delete-channel-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
 import { ChannelService } from './channel.service';
 import { ChatService } from 'src/chat/chat.service';
@@ -18,11 +19,14 @@ import { UserEntity } from 'src/user/user.entity';
 @Injectable()
 export class ChannelMemberService {
   constructor(
-    private usreService: UserService,
+    private userService: UserService,
 
     private channelService: ChannelService,
 
     private chatService: ChatService,
+
+    @InjectRepository(ChannelEntity)
+    private readonly channelRepository: Repository<ChannelEntity>,
 
     @InjectRepository(ChannelMemberEntity)
     private readonly channelMemberRepository: Repository<ChannelMemberEntity>,
@@ -75,33 +79,96 @@ export class ChannelMemberService {
     return channel;
   }
 
+  // async exit(deleteChannelMemberDto: DeleteChannelMemberDto) {
+  // await this.channelMemberRepository.delete({
+  // channelId: deleteChannelMemberDto.channelId,
+  // userId: deleteChannelMemberDto.userId,
+  // });
+
+  // const channelMembers = await this.channelMemberRepository.find({
+  // where: { channelId: deleteChannelMemberDto.channelId },
+  // order: { updatedAt: 'ASC' },
+  // });
+
+  // const channel = await this.channelRepository.findOne({
+  // where: { id: deleteChannelMemberDto.channelId },
+  // });
+
+  // if (channelMembers.length === 0) {
+  // await this.channelRepository.delete({
+  // id: deleteChannelMemberDto.channelId,
+  // });
+  // return channel;
+  // }
+
+  // if (channel.ownerId === deleteChannelMemberDto.userId) {
+  // // channelMembers에서 가장 오래된 admin 찾기
+  // const oldAdmin = channelMembers.find((member) => member.isAdmin === true);
+  // if (oldAdmin)
+  // await this.channelRepository.update(channel.id, {
+  // ownerId: oldAdmin.userId,
+  // });
+  // else {
+  // const oldMemeber = channelMembers.find(
+  // (member) => member.isAdmin === false,
+  // );
+  // await this.channelRepository.update(channel.id, {
+  // ownerId: oldMemeber.userId,
+  // });
+  // }
+  // }
+
+  // return channel;
+  // }
+
   async exit(deleteChannelMemberDto: DeleteChannelMemberDto) {
-    const channel = await this.channelService.findOne(
-      deleteChannelMemberDto.channelId,
-      ['channelMembers'],
-    );
+    return await this.channelRepository.manager.transaction(
+      async (transactionalEntityManager: EntityManager) => {
+        await transactionalEntityManager.delete(ChannelMemberEntity, {
+          channelId: deleteChannelMemberDto.channelId,
+          userId: deleteChannelMemberDto.userId,
+        });
 
-    this.channelService.checkIsChannelMember(
-      channel,
-      deleteChannelMemberDto.userId,
-    );
+        const channelMembers = await transactionalEntityManager.find(
+          ChannelMemberEntity,
+          {
+            where: { channelId: deleteChannelMemberDto.channelId },
+            order: { updatedAt: 'ASC' },
+          },
+        );
 
-    if (deleteChannelMemberDto.userId === channel.ownerId) {
-      this.channelService.delete(
-        deleteChannelMemberDto.userId,
-        deleteChannelMemberDto.channelId,
-      );
-    } else {
-      this.channelMemberRepository.delete(deleteChannelMemberDto);
-      this.chatService.removeConnectedMember(
-        deleteChannelMemberDto.channelId.toString(),
-        deleteChannelMemberDto.userId,
-      );
-    }
+        let channel = await transactionalEntityManager.findOne(ChannelEntity, {
+          where: { id: deleteChannelMemberDto.channelId },
+        });
+
+        if (!channel) throw new Error('Channel not found');
+
+        if (channelMembers.length === 0) {
+          await transactionalEntityManager.delete(ChannelEntity, {
+            id: deleteChannelMemberDto.channelId,
+          });
+          return channel;
+        }
+
+        if (channel.ownerId === deleteChannelMemberDto.userId) {
+          const oldAdmin = channelMembers.find((member) => member.isAdmin);
+          const newOwnerId = oldAdmin
+            ? oldAdmin.userId
+            : channelMembers[0].userId;
+
+          await transactionalEntityManager.update(ChannelEntity, channel.id, {
+            ownerId: newOwnerId,
+          });
+        }
+        return await transactionalEntityManager.findOne(ChannelEntity, {
+          where: { id: deleteChannelMemberDto.channelId },
+        });
+      },
+    );
   }
 
   async invite(userId: number, createChannelMemberDto: CreateChannelMemberDto) {
-    const member: UserEntity = await this.usreService.findOne(
+    const member: UserEntity = await this.userService.findOne(
       createChannelMemberDto.userId,
     );
     if (!member) throw new NotFoundException('존재하지 않는 사용자입니다.');
@@ -117,16 +184,15 @@ export class ChannelMemberService {
           member.userId === createChannelMemberDto.userId,
       )
     ) {
-      return channel;
+      throw new ConflictException('이미 채널에 참여한 사용자입니다.');
     }
 
-    this.channelService.checkIsChannelMember(channel, userId);
-    this.channelService.checkIsChannelAdmin(channel, userId);
+    this.channelService.checkIsChannelOwner(channel, userId);
 
     const channelMember: ChannelMemberEntity =
       this.channelMemberRepository.create(createChannelMemberDto);
     await this.channelMemberRepository.save(channelMember);
 
-    return channel;
+    return channelMember;
   }
 }

@@ -57,17 +57,6 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  // @UseGuards(AuthGuard('jwt'))
-  // @Get('/tmp')
-  // @ApiOperation({
-  //   summary: '전체 유저 조회 API',
-  //   description: '접속 중인 유저 리스트 조회',
-  // })
-  // @ApiResponse({ status: 200, description: 'OK' })
-  // findAll() {
-  //   return this.userService.findAll();
-  // }
-
   @UseGuards(AuthGuard('jwt'))
   @Get()
   @ApiOperation({
@@ -78,6 +67,27 @@ export class UserController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   findOne(@Request() req) {
     return this.userService.findOne(req.user.id);
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('/page')
+  @ApiOperation({
+    summary: '전체 유저 조회 API',
+    description: '접속 중인 유저 리스트 조회',
+  })
+  @ApiResponse({ status: 200, description: 'OK' })
+  getPaginatedUsers(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 30,
+    @Query('name') name: string,
+  ) {
+    limit = limit > 100 ? 100 : limit;
+    console.log(name);
+    return this.userService.getPaginatedUsers({
+      page,
+      limit,
+      name,
+    });
   }
 
   @Get('/ranking')

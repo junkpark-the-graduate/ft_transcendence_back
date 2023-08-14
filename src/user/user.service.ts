@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { EUserStatus, UserEntity } from './user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as path from 'path';
@@ -172,5 +172,37 @@ export class UserService {
 
   async remove(id: number) {
     return `This action removes a #${id} user`;
+  }
+
+  async getPaginatedUsers(options: {
+    page: number;
+    limit: number;
+    name: string;
+  }): Promise<UserEntity[]> {
+    const { limit, page, name } = options;
+    const skippedItems = (page - 1) * limit;
+
+    if (!name) {
+      const users = await this.userRepository.find({
+        order: {
+          id: 'ASC',
+        },
+        skip: skippedItems,
+        take: limit,
+      });
+      return users;
+    } else {
+      const users = await this.userRepository.find({
+        where: {
+          name: Like(`%${name}%`),
+        },
+        order: {
+          id: 'ASC',
+        },
+        skip: skippedItems,
+        take: limit,
+      });
+      return users;
+    }
   }
 }

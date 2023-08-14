@@ -8,7 +8,7 @@ import {
 
 import { CreateChannelDto } from '../dto/create-channel.dto';
 import { CreateChannelMemberDto } from '../dto/create-channel-member.dto';
-import { Brackets, EntityManager, Repository } from 'typeorm';
+import { Brackets, EntityManager, In, Not, Repository } from 'typeorm';
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import { ChannelEntity, EChannelType } from '../entities/channel.entity';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
@@ -106,24 +106,51 @@ export class ChannelService {
       throw new NotFoundException('존재하지 않는 사용자입니다.');
     }
 
-    const tmp = await this.channelRepository
-      .createQueryBuilder('channel')
-      .innerJoinAndSelect('channel.channelMembers', 'channelMember')
-      .where('channel.type = :type', { type: EChannelType.direct })
-      .andWhere(
-        new Brackets((qb) => {
-          qb.where(
-            '(channel.ownerId = :ownerId AND channelMember.userId = :memberId)',
-          ).orWhere(
-            '(channel.ownerId = :memberId AND channelMember.userId = :ownerId)',
-          );
-        }),
-        { ownerId: userId, memberId: memberId },
-      )
-      .getOne();
+    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1');
+    //tmp1, tmp2한번에 처리하기 QueryBuilder 안쓰고
+    const alreadyExistChannel = await this.channelRepository.findOne({
+      where: [
+        {
+          name: `${userId}-${memberId}`,
+        },
+        {
+          name: `${memberId}-${userId}`,
+        },
+      ],
+      relations: ['channelMembers'],
+    });
+    console.log('alreadyExistChannel', alreadyExistChannel);
 
-    if (tmp) {
-      throw new ConflictException('이미 존재하는 direct 채널입니다.');
+    if (alreadyExistChannel?.channelMembers.length === 2) {
+      console.log(
+        'alreadyExistChannel.channelMembers.length',
+        alreadyExistChannel.channelMembers.length,
+      );
+      return alreadyExistChannel;
+    }
+    if (alreadyExistChannel?.channelMembers.length === 1) {
+      console.log(
+        'alreadyExistChannel.channelMembers.length',
+        alreadyExistChannel.channelMembers.length,
+      );
+
+      const isUserExist: ChannelMemberEntity =
+        alreadyExistChannel.channelMembers.find(
+          (channelMember) => channelMember.userId === userId,
+        );
+      console.log('isUserExist', isUserExist);
+      const createChannelMemberDto: CreateChannelMemberDto = {
+        channelId: alreadyExistChannel.id,
+        userId: isUserExist ? memberId : userId,
+        isAdmin: true,
+        password: null,
+      };
+      console.log('createMemberDto ', createChannelMemberDto);
+      const channelMember = this.channelMemberRepository.create(
+        createChannelMemberDto,
+      );
+      await this.channelMemberRepository.save(channelMember);
+      return alreadyExistChannel;
     }
 
     const channel = await this.entityManager.transaction(async (manager) => {
@@ -137,19 +164,33 @@ export class ChannelService {
         ...createChannelDto,
       });
       await manager.save(channel);
+      console.log('channel save ', channel);
+      const createChannelMemberDto1: CreateChannelMemberDto = {
+        channelId: channel.id,
+        userId: userId,
+        isAdmin: true,
+        password: null,
+      };
+      const channelMember1 = this.channelMemberRepository.create(
+        createChannelMemberDto1,
+      );
 
-      const createChannelMemberDto: CreateChannelMemberDto = {
+      const createChannelMemberDto2: CreateChannelMemberDto = {
         channelId: channel.id,
         userId: memberId,
         isAdmin: true,
         password: null,
       };
-      const channelMember = this.channelMemberRepository.create(
-        createChannelMemberDto,
+      const channelMember2 = this.channelMemberRepository.create(
+        createChannelMemberDto2,
       );
-      await manager.save(channelMember);
+
+      await manager.save(channelMember1);
+      await manager.save(channelMember2);
+
       return channel;
     });
+
     return channel;
   }
 
@@ -159,6 +200,10 @@ export class ChannelService {
     updateChannelDto: UpdateChannelDto,
   ): Promise<ChannelEntity> {
     const channel: ChannelEntity = await this.findOne(channelId);
+
+    if (channel.type === EChannelType.direct) {
+      throw new InternalServerErrorException('DM은 수정할 수 없습니다.');
+    }
 
     this.checkIsChannelOwner(channel, userId);
 
@@ -208,7 +253,11 @@ export class ChannelService {
 
   async findAll(): Promise<ChannelEntity[]> {
     try {
-      const channels = await this.channelRepository.find();
+      const channels = await this.channelRepository.find({
+        where: {
+          type: In([EChannelType.public, EChannelType.protected]),
+        },
+      });
       return channels;
     } catch (err) {
       console.log(err);
@@ -238,13 +287,45 @@ export class ChannelService {
     return channel;
   }
 
-  async findJoinedChannel(userId: number) {
-    const channels = await this.channelRepository
-      .createQueryBuilder('channel')
-      .innerJoin('channel.channelMembers', 'channelMember')
-      .where('channelMember.userId = :userId', { userId })
-      .getMany();
-    return channels;
+  async findJoinedChannel(userId: number): Promise<ChannelEntity[]> {
+    const channels = await this.channelRepository.find({
+      where: {
+        type: Not(EChannelType.direct),
+      },
+      relations: ['channelMembers', 'channelMembers.user'],
+    });
+
+    return channels.filter((channel) =>
+      channel.channelMembers.some((member) => member.userId === userId),
+    );
+  }
+
+  async findJoinedDirectChannel(userId: number): Promise<ChannelEntity[]> {
+    let directChannels = await this.channelRepository.find({
+      where: {
+        type: EChannelType.direct,
+      },
+      relations: ['channelMembers', 'channelMembers.user'],
+    });
+
+    directChannels = directChannels.filter((channel) =>
+      channel.channelMembers.some((member) => member.userId === userId),
+    );
+
+    const updatedDirectChannels = await Promise.all(
+      directChannels.map(async (channel) => {
+        const channelMemberIds = channel.name
+          .split('-')
+          .map((id: string) => parseInt(id));
+        const memberId = channelMemberIds.find((id: number) => id !== userId);
+
+        const member = await this.userService.findOne(memberId);
+        channel.name = member.name;
+        return channel;
+      }),
+    );
+
+    return updatedDirectChannels;
   }
 
   async findOneChannelMember(channelId: number | string, userId: number) {
@@ -264,6 +345,20 @@ export class ChannelService {
   }
 
   async findAllChannelMember(
+    channelId: number,
+  ): Promise<ChannelMemberEntity[]> {
+    // TODO: 채널관리만 조회할 수 있도록
+    const channelMembers = await this.channelMemberRepository.find({
+      where: {
+        channelId: channelId,
+      },
+      relations: ['user'],
+    });
+    console.log(channelMembers);
+    return channelMembers;
+  }
+
+  async findAllNonChannelMember(
     channelId: number,
   ): Promise<ChannelMemberEntity[]> {
     // TODO: 채널관리만 조회할 수 있도록

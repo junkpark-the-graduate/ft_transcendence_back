@@ -10,6 +10,9 @@ import {
 import { ChannelService } from 'src/channel/services/channel.service';
 import { Socket } from 'socket.io';
 import { ChannelMuteService } from 'src/channel/services/channel-mute.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ChatEntity } from './chat.entity';
+import { Repository } from 'typeorm';
 
 interface User {
   socket: Socket;
@@ -35,6 +38,9 @@ export class ChatService {
     @Inject(forwardRef(() => ChannelService))
     private channelService: ChannelService,
     private channelMuteService: ChannelMuteService,
+
+    @InjectRepository(ChatEntity)
+    private readonly chatRepository: Repository<ChatEntity>,
   ) {}
 
   private channels: Map<string, Channel> = new Map<string, Channel>();
@@ -84,6 +90,7 @@ export class ChatService {
   }
 
   getMemberInChannel(channelId: string, userId: number) {
+    if (!this.channels[channelId]) return null;
     return this.channels[channelId].connectedMembers.get(userId);
   }
 
@@ -128,5 +135,31 @@ export class ChatService {
   removeMutedMember(channelId: string, userId: number) {
     this.channelMuteService.unmute(parseInt(channelId), userId);
     this.channels[channelId].mutedMembers.delete(userId);
+  }
+
+  saveMessage(userId: number, channelId: string, message: string) {
+    const res = this.chatRepository.create({
+      user: { id: userId },
+      channel: { id: parseInt(channelId) },
+      message: message,
+    });
+    console.log('saveChat', res);
+    this.chatRepository.save(res);
+  }
+
+  async getChatHistory(channelId: number, page: number) {
+    const ITEMS_PER_PAGE = 30;
+
+    const ret = await this.chatRepository
+      .createQueryBuilder('chat')
+      .leftJoinAndSelect('chat.user', 'user', 'user.id = chat.userId') // chat.userId는 실제 컬럼에 따라 달라질 수 있습니다.
+      .select(['chat.id', 'chat.message', 'user.id', 'user.name', 'user.image'])
+      .where('chat.channelId = :channelId', { channelId: channelId })
+      .orderBy('chat.id', 'DESC')
+      .skip((page - 1) * ITEMS_PER_PAGE)
+      .take(ITEMS_PER_PAGE)
+      .getMany();
+
+    return ret.reverse();
   }
 }

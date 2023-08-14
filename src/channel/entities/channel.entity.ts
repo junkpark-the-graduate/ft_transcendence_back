@@ -14,6 +14,7 @@ import { ChannelBannedMemberEntity } from './channel-banned-member.entity';
 import { ChannelMutedMemberEntity } from './channel-muted-member.entity';
 import { UserEntity } from 'src/user/user.entity';
 import { Exclude } from 'class-transformer';
+import { ChatEntity } from 'src/chat/chat.entity';
 
 export enum EChannelType {
   direct,
@@ -56,6 +57,9 @@ export class ChannelEntity {
   @ApiProperty()
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(() => ChatEntity, (chat) => chat.channel)
+  chats: ChatEntity[];
 
   @OneToMany(
     () => ChannelMemberEntity,
