@@ -123,13 +123,14 @@ export class UserController {
     return await this.userService.getUserRankingById(id);
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Get('/:id')
   @ApiOperation({
     summary: '특정 유저 조회 API',
     description: 'id로 특정 유저 조회',
   })
   @ApiResponse({ status: 200, description: 'OK', type: UserEntity })
-  findUser(@Param('id') userId: number) {
+  findUser(@Param('id', new ParseIntPipe()) userId: number) {
     return this.userService.findOne(userId);
   }
 
