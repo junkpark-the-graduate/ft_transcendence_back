@@ -4,6 +4,9 @@ import { UserService } from 'src/user/user.service';
 import { AuthDto } from './dto/auth.dto';
 import { TfaAuthService } from './services/tfa-auth.service';
 import { FtAuthService } from './services/ft-auth.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from 'src/user/user.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +15,8 @@ export class AuthService {
     private ftAuthService: FtAuthService,
     private jwtService: JwtService,
     private tfaAuthService: TfaAuthService,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
   ) {}
 
   private createAccessToken = async (id: number): Promise<string> => {
@@ -37,7 +42,9 @@ export class AuthService {
       const { id, email, login, image } = await this.ftAuthService.getUserInfo(
         ftAccessToken,
       );
-      let user = await this.userService.findOne(id);
+      let user = await this.userRepository.findOne({
+        where: { id: id },
+      });
 
       if (!user) {
         user = await this.userService.create({

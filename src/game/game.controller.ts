@@ -9,6 +9,7 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { GameService } from './game.service';
 import { CreateGameDto } from './dto/create-game.dto';
@@ -25,9 +26,11 @@ import {
 import { GameEntity } from './entities/game.entity';
 import { GameType } from './game.constants';
 import { GameQueryDto } from './dto/game-query.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('game')
 @Controller('game')
+@UseGuards(AuthGuard('jwt'))
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
