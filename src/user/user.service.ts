@@ -2,7 +2,6 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -20,6 +19,7 @@ export class UserService {
     private jwtService: JwtService,
   ) {}
 
+  // create -------------------------------------------------
   async create(createUserDto: CreateUserDto) {
     const { id, email, name, image } = createUserDto;
 
@@ -39,6 +39,7 @@ export class UserService {
     }
   }
 
+  // find ---------------------------------------------------
   async findAll() {
     return `This action returns all user`;
   }
@@ -55,6 +56,29 @@ export class UserService {
     return user;
   }
 
+  async findOneByNameOrId(data: string) {
+    const userId = parseInt(data);
+    let user;
+
+    if (!isNaN(userId)) {
+      user = await this.userRepository.findOne({
+        where: {
+          id: Number(data),
+        },
+      });
+    } else {
+      user = await this.userRepository.findOne({
+        where: {
+          name: data,
+        },
+      });
+    }
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
   async findOneImg(id: number, imageName: string) {
     const user = await this.userRepository.findOne({
       where: {
@@ -64,6 +88,7 @@ export class UserService {
     return user.image;
   }
 
+  // update -------------------------------------------------
   async update(id: number, updateUserDto: UpdateUserDto) {
     const { name, twoFactorEnabled } = updateUserDto;
 
@@ -118,8 +143,8 @@ export class UserService {
     }
   }
 
-  // 주어진 userId에 해당하는 유저의 상태를 검색하는 메서드
   async findUserStatusById(userId: number): Promise<EUserStatus> {
+    // 주어진 userId에 해당하는 유저의 상태를 검색하는 메서드
     // userId를 이용하여 데이터베이스에서 유저의 상태를 검색
     const user = await this.userRepository.findOne({
       where: {
@@ -146,6 +171,7 @@ export class UserService {
     return updatedUser;
   }
 
+  // ranking ------------------------------------------------
   async getUserRanking() {
     return await this.userRepository.find({
       order: {
@@ -170,10 +196,7 @@ export class UserService {
     return { ranking: userRanking + 1 };
   }
 
-  async remove(id: number) {
-    return `This action removes a #${id} user`;
-  }
-
+  // ?????? -------------------------------------------------
   async getPaginatedUsers(options: {
     page: number;
     limit: number;
@@ -204,5 +227,10 @@ export class UserService {
       });
       return users;
     }
+  }
+
+  // remove -------------------------------------------------
+  async remove(id: number) {
+    return `This action removes a #${id} user`;
   }
 }
