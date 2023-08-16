@@ -20,12 +20,7 @@ import { v4 } from 'uuid';
 @WebSocketGateway(parseInt(process.env.GAME_SOCKET_PORT), {
   namespace: 'game',
   cors: {
-    origin: [
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-      'http://localhost:3000',
-      'http://localhost:3001',
-    ],
+    origin: [process.env.FRONT_END_POINT, "http://localhost:3000", "http://127.0.0.1:3000"],
     credentials: true,
   },
 })
