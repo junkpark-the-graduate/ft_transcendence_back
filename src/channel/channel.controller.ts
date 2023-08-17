@@ -143,6 +143,27 @@ export class ChannelController {
 
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(ClassSerializerInterceptor)
+  @Get('/keyword')
+  @ApiOperation({
+    summary: '검색창에서 채널 조회 API',
+    description: '채널 검색',
+  })
+  @ApiResponse({ status: 200, description: 'OK' })
+  findAllBySearchKeyword(
+    @Request() req,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('searchKeyword') searchKeyword: string,
+  ) {
+    return this.channelService.findAllBySearchKeyword({
+      page,
+      limit,
+      searchKeyword,
+    });
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(ClassSerializerInterceptor)
   @Get(':channelId')
   @ApiOperation({ summary: '채널 조회 API', description: '채널 1개 조회' })
   // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
