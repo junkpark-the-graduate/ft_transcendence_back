@@ -180,7 +180,7 @@ export class GameGateway
     socket['room'] = room;
     socket['role'] = Role.Player1;
     room['readyCount'] = 0;
-    return roomId;
+    return roomId; // 초대하면 초대한 사람이 초대 받을 사람한테 /game/join?roomId={roomId} 보내주고, 초대한 사람은 /game/join?roomId={roomId}로 라우팅이 되어야 함
   }
 
   @SubscribeMessage('normal_matching')
