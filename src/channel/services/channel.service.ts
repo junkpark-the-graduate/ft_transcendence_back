@@ -305,7 +305,13 @@ export class ChannelService {
       where: {
         type: EChannelType.direct,
       },
-      relations: ['channelMembers', 'channelMembers.user'],
+      relations: ['channelMembers', 'channelMembers.user', 'chats'],
+    });
+
+    directChannels = directChannels.map((channel) => {
+      const lastChat = channel.chats[channel.chats.length - 1];
+      channel.chats = [lastChat];
+      return channel;
     });
 
     directChannels = directChannels.filter((channel) =>
