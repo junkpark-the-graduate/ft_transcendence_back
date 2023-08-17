@@ -8,7 +8,7 @@ import {
 
 import { CreateChannelDto } from '../dto/create-channel.dto';
 import { CreateChannelMemberDto } from '../dto/create-channel-member.dto';
-import { Brackets, EntityManager, In, Not, Repository } from 'typeorm';
+import { Brackets, EntityManager, In, Like, Not, Repository } from 'typeorm';
 import { InjectEntityManager, InjectRepository } from '@nestjs/typeorm';
 import { ChannelEntity, EChannelType } from '../entities/channel.entity';
 import { ChannelMemberEntity } from '../entities/channel-member.entity';
@@ -305,7 +305,13 @@ export class ChannelService {
       where: {
         type: EChannelType.direct,
       },
-      relations: ['channelMembers', 'channelMembers.user'],
+      relations: ['channelMembers', 'channelMembers.user', 'chats'],
+    });
+
+    directChannels = directChannels.map((channel) => {
+      const lastChat = channel.chats[channel.chats.length - 1];
+      channel.chats = [lastChat];
+      return channel;
     });
 
     directChannels = directChannels.filter((channel) =>
@@ -487,5 +493,41 @@ export class ChannelService {
       throw new UnauthorizedException(
         '자신에게는 해당 작업을 수행할 수 없습니다.',
       );
+  }
+
+  async findAllBySearchKeyword(options: {
+    page: number;
+    limit: number;
+    searchKeyword: string;
+  }): Promise<ChannelEntity[]> {
+    const { limit, page, searchKeyword } = options;
+    const skippedItems = (page - 1) * limit;
+
+    if (!searchKeyword) {
+      const channels = await this.channelRepository.find({
+        where: {
+          type: Not(EChannelType.direct),
+        },
+        order: {
+          id: 'ASC',
+        },
+        skip: skippedItems,
+        take: limit,
+      });
+      return channels;
+    } else {
+      const channels = await this.channelRepository.find({
+        where: {
+          name: Like(`%${searchKeyword}%`),
+          type: Not(EChannelType.direct),
+        },
+        order: {
+          id: 'ASC',
+        },
+        skip: skippedItems,
+        take: limit,
+      });
+      return channels;
+    }
   }
 }
