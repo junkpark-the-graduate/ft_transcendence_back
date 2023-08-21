@@ -41,7 +41,7 @@ interface ChatHistoryRequest {
 @WebSocketGateway(parseInt(process.env.CHAT_SOCKET_PORT), {
   namespace: 'chat',
   cors: {
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: [process.env.FRONT_END_POINT, "http://localhost:3000", "http://127.0.0.1:3000"],
     credentials: true,
   },
 })

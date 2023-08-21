@@ -125,7 +125,7 @@ export class UserService {
       console.log(err);
     }
 
-    user.image = `http://localhost:3001/${newFileName}`;
+    user.image = `${process.env.BACK_END_POINT}/${newFileName}`;
     const updatedUser = await this.userRepository.save(user);
 
     return updatedUser;

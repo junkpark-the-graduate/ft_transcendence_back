@@ -16,12 +16,7 @@ import { JwtService } from '@nestjs/jwt';
 @WebSocketGateway(parseInt(process.env.USER_SOCKET_PORT), {
   namespace: 'user',
   cors: {
-    origin: [
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-      'http://localhost:3000',
-      'http://localhost:3001',
-    ],
+    origin: [process.env.FRONT_END_POINT, "http://localhost:3000", "http://127.0.0.1:3000"],
     credentials: true,
   },
 })
