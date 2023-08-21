@@ -162,4 +162,10 @@ export class ChatService {
 
     return ret.reverse();
   }
+
+  async findConnectedMember(channelId: string, userId: number) {
+    const channel = this.channels[channelId];
+    if (!channel) return null;
+    return channel.connectedMembers.get(userId);
+  }
 }
