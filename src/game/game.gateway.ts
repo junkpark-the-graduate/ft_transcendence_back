@@ -20,7 +20,11 @@ import { v4 } from 'uuid';
 @WebSocketGateway(parseInt(process.env.GAME_SOCKET_PORT), {
   namespace: 'game',
   cors: {
-    origin: [process.env.FRONT_END_POINT, "http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: [
+      process.env.FRONT_END_POINT,
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ],
     credentials: true,
   },
 })
@@ -61,7 +65,7 @@ export class GameGateway
     const interval = setInterval(async () => {
       const match = this.gameMatchmaker.matchPlayers();
       // 접속중인 유저와 게임 룸
-      console.log('접속중인 유저와 게임 룸: ', this.io.adapter['rooms']);
+      // console.log('접속중인 유저와 게임 룸: ', this.io.adapter['rooms']);
       if (match) {
         const { gameType, player1, player2 } = match;
         console.log('match_found');
