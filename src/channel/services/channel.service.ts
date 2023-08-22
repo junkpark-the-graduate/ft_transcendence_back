@@ -215,6 +215,15 @@ export class ChannelService {
       throw new InternalServerErrorException('DM으로 변경할 수 없습니다.');
     }
 
+    if (updateChannelDto.name) {
+      const tmp = await this.channelRepository.findOne({
+        where: {
+          name: updateChannelDto.name,
+        },
+      });
+      if (tmp) throw new ConflictException('이미 존재하는 채널 이름입니다.');
+    }
+
     if (updateChannelDto.type) {
       if (updateChannelDto.type === EChannelType.protected) {
         if (!updateChannelDto.password)
