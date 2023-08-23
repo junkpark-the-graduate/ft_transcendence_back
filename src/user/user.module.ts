@@ -11,7 +11,7 @@ import { UserGateway } from './user.gateway';
   imports: [
     TypeOrmModule.forFeature([UserEntity]),
     MulterModule.register({
-      dest: join(__dirname, '..', 'public'),
+      dest: join(__dirname, '..', '..', '..', 'public'),
     }),
   ],
   controllers: [UserController],

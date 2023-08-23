@@ -117,7 +117,7 @@ export class UserService {
       },
     });
 
-    const filePath = path.join(__dirname, '..', 'public');
+    const filePath = path.join(__dirname, '..', '..', '..', 'public');
     const newFileName = `${filename}.${extension.split('/')[1]}`;
     try {
       await fs.rename(`${filePath}/${filename}`, `${filePath}/${newFileName}`);
