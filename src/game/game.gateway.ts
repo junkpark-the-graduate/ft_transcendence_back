@@ -126,7 +126,9 @@ export class GameGateway
     this.logger.log(`Client disconnected: ${socket.id}`);
     const room = socket['room'];
     if (room && socket['role'] !== Role.Spectator) {
-      this.disconnectedUserMap.set(socket['ftId'], socket['room']);
+      if (room['isPlaying']) {
+        this.disconnectedUserMap.set(socket['ftId'], socket['room']);
+      }
     }
     this.gameMatchmaker.removePlayer(socket);
     this.userService.updateUserStatus(socket['ftId'], EUserStatus.offline);
@@ -146,7 +148,6 @@ export class GameGateway
     if (!room) {
       return { isSuccess: false };
     }
-
     if (!socket['room']) {
       const ftId = socket['ftId'];
       // reconnection
@@ -162,20 +163,20 @@ export class GameGateway
         role === Role.Player1
           ? (room['player1'] = socket)
           : (room['player2'] = socket);
-        return { isSuccess: true };
-      }
-      socket['room'] = room;
-      socket.join(roomId);
-      this.gameEngine.gameInit(room);
-      this.gameEngine.gameLoop(room);
-      // friendly game
-      if (room['readyCount'] !== 2) {
-        socket['role'] = Role.Player2;
-        room['player2'] = socket;
-        room['type'] = 'friendly';
       } else {
-        // Spectator
-        socket['role'] = Role.Spectator;
+        socket['room'] = room;
+        socket.join(roomId);
+        // friendly game
+        if (room['readyCount'] !== 2) {
+          socket['role'] = Role.Player2;
+          room['player2'] = socket;
+          room['type'] = 'friendly';
+        } else {
+          // Spectator
+          socket['role'] = Role.Spectator;
+        }
+        this.gameEngine.gameInit(room);
+        this.gameEngine.gameLoop(room);
       }
     }
     return { isSuccess: true };
@@ -201,7 +202,9 @@ export class GameGateway
   handleLeaveRoom(@ConnectedSocket() socket: Socket) {
     const room = socket['room'];
     if (room) {
-      this.disconnectedUserMap.set(socket['ftId'], room);
+      if (room['isPlaying']) {
+        this.disconnectedUserMap.set(socket['ftId'], room);
+      }
       console.log(room['roomId']);
       socket.leave(room['roomId']);
       console.log('leave_room');
@@ -219,8 +222,8 @@ export class GameGateway
     const room = this.gameRoomMap.get(roomId);
     if (room /* && room['inviteeId'] === socket['ftId'] */) {
       socket['room'] = null;
-      room.socketsLeave(roomId);
       room.emit('decline_invitation'); // 프론트에서 이 이벤트 받으면 alert, /game 리디렉션
+      room.socketsLeave(roomId);
     }
   }
 

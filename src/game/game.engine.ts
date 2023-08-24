@@ -69,7 +69,6 @@ export class GameEngine {
       x: 0,
       y: -30,
     };
-
     player2['paddle'] = {
       x: 0,
       y: 30,
@@ -84,7 +83,7 @@ export class GameEngine {
     const ready_interval = setInterval(() => {
       console.log('timeout: ', timeout);
       if (room['readyCount'] === 2 || timeout > 30) {
-        // TODO: 친선전에서 30초가 넘어가면 시작될 것 같음
+        room['isPlaying'] = true;
         clearInterval(ready_interval);
         const interval = setInterval(() => {
           room.emit('game', this.gameUpdate(room));
