@@ -10,7 +10,7 @@ import { join } from 'path';
   imports: [
     TypeOrmModule.forFeature([UserEntity]),
     MulterModule.register({
-      dest: join(__dirname, '..', 'public'),
+      dest: join(__dirname, '..', '..', '..', 'public'),
     }),
   ],
   controllers: [UserController],
