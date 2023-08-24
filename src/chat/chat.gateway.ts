@@ -83,6 +83,8 @@ export class ChatGateway
 
       this.chatService.removeConnectedMember(channelId, payload.sub);
       this.logger.log(`disconnected : ${socket.id} ${socket.nsp.name}`);
+
+      socket.to(channelId).emit('member_disconnected', { userId: payload.sub });
     } catch (err) {
       throw new UnauthorizedException('Invalid token.');
     }
@@ -101,11 +103,24 @@ export class ChatGateway
 
       await this.chatService.initChannels(channelId);
 
-      await this.chatService.addConnectedMember(channelId, payload.sub, socket);
+      const tmp = await this.chatService.addConnectedMember(
+        channelId,
+        payload.sub,
+        socket,
+      );
+
+      const member = {
+        id: tmp.user.id,
+        name: tmp.user.name,
+        image: tmp.user.image,
+      };
 
       await socket.join(channelId); // join the room based on channelId
 
       this.logger.log(`connected : ${socket.id} ${socket.nsp.name} ${token}`);
+
+      // channel 에 접속된 클라이언트 에게 접속된 유저 정보 전달
+      socket.to(channelId).emit('member_connected', { member });
     } catch (err) {
       console.log(err);
       throw new InternalServerErrorException(err.message);
@@ -181,6 +196,14 @@ export class ChatGateway
     // }
 
     member.socket.emit('open_invite_game_modal', { roomId, user });
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('get_connected_members')
+  async getConnectedMembers(@ConnectedSocket() socket: Socket) {
+    const channelId = socket.handshake.query.channelId as string;
+    const connectedMembers = this.chatService.getConnectedMembers(channelId);
+    return connectedMembers;
   }
 
   public async kickMember(channelId: number, userId: number) {
