@@ -109,8 +109,6 @@ export class UserService {
   }
 
   async updateImage(id: number, filename: string, extension: string) {
-    console.log('filename:', filename);
-
     const user = await this.userRepository.findOne({
       where: {
         id: id,
