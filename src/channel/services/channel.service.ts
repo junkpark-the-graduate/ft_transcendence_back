@@ -221,7 +221,8 @@ export class ChannelService {
           name: updateChannelDto.name,
         },
       });
-      if (tmp) throw new ConflictException('이미 존재하는 채널 이름입니다.');
+      if (tmp.id !== channelId && tmp)
+        throw new ConflictException('이미 존재하는 채널 이름입니다.');
     }
 
     if (updateChannelDto.type) {
