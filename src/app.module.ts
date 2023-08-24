@@ -41,7 +41,7 @@ const typeOrmModuleOptions = {
     BlockModule,
     DummyModule,
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'dist', 'public'),
+      rootPath: join(__dirname, '..', '..', 'public'),
     }),
     ChatModule,
     DummyModule,

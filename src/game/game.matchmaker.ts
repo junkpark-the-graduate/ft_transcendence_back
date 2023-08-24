@@ -59,8 +59,8 @@ export class GameMatchmaker {
   }
 
   public matchPlayers(): Match | null {
-    console.log('normalPool.length: ', this.normalPool.length);
-    console.log('ladderPool.length: ', this.ladderPool.length);
+    // console.log('normalPool.length: ', this.normalPool.length);
+    // console.log('ladderPool.length: ', this.ladderPool.length);
     if (this.ladderPool.length >= 2) {
       const match = this.matchPlayersByGameType(GameType.LADDER);
       if (match) return match;

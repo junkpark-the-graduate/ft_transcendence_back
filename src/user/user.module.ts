@@ -5,17 +5,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
 import { MulterModule } from '@nestjs/platform-express';
 import { join } from 'path';
-import { UserGateway } from './user.gateway';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserEntity]),
     MulterModule.register({
-      dest: join(__dirname, '..', 'public'),
+      dest: join(__dirname, '..', '..', '..', 'public'),
     }),
   ],
   controllers: [UserController],
-  providers: [UserService, UserGateway],
+  providers: [UserService],
   exports: [UserService],
 })
 export class UserModule {}

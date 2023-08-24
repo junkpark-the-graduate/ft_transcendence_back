@@ -16,11 +16,16 @@ import { GameMatchmaker } from './game.matchmaker';
 import { UserService } from 'src/user/user.service';
 import { GameType } from './game.constants';
 import { v4 } from 'uuid';
+import { EUserStatus } from 'src/user/user.entity';
 
 @WebSocketGateway(parseInt(process.env.GAME_SOCKET_PORT), {
   namespace: 'game',
   cors: {
-    origin: [process.env.FRONT_END_POINT, "http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: [
+      process.env.FRONT_END_POINT,
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ],
     credentials: true,
   },
 })
@@ -61,7 +66,7 @@ export class GameGateway
     const interval = setInterval(async () => {
       const match = this.gameMatchmaker.matchPlayers();
       // 접속중인 유저와 게임 룸
-      console.log('접속중인 유저와 게임 룸: ', this.io.adapter['rooms']);
+      // console.log('접속중인 유저와 게임 룸: ', this.io.adapter['rooms']);
       if (match) {
         const { gameType, player1, player2 } = match;
         console.log('match_found');
@@ -99,8 +104,16 @@ export class GameGateway
     const accessToken = socket.handshake.query.accessToken as string;
     try {
       const ftId: number = this.jwtService.verify(accessToken)['sub'];
+
+      const sockets = await this.io.fetchSockets();
+      sockets.forEach((socket) => {
+        if (socket['ftId'] === ftId) {
+          socket.disconnect();
+        }
+      });
       socket['ftId'] = ftId;
       socket['mmr'] = (await this.userService.findOne(socket['ftId']))['mmr'];
+      this.userService.updateUserStatus(socket['ftId'], EUserStatus.online);
     } catch (error) {
       console.log('handleConnection error: ', error);
       setTimeout(() => {
@@ -116,20 +129,19 @@ export class GameGateway
       this.disconnectedUserMap.set(socket['ftId'], socket['room']);
     }
     this.gameMatchmaker.removePlayer(socket);
+    this.userService.updateUserStatus(socket['ftId'], EUserStatus.offline);
   }
 
   @SubscribeMessage('reconnect')
   handleReconnect(@ConnectedSocket() socket: Socket) {
     const ftId = socket['ftId'];
     const room = this.disconnectedUserMap.get(ftId);
-    this.disconnectedUserMap.delete(ftId);
     return { roomId: room ? room['roomId'] : undefined };
   }
 
   @SubscribeMessage('join_room')
   handleJoinRoom(@ConnectedSocket() socket: Socket, @MessageBody() data) {
     const { roomId } = data;
-    //console.log('roomId', roomId);
     const room = this.gameRoomMap.get(roomId);
     if (!room) {
       return { isSuccess: false };
@@ -154,13 +166,13 @@ export class GameGateway
       }
       socket['room'] = room;
       socket.join(roomId);
+      this.gameEngine.gameInit(room);
+      this.gameEngine.gameLoop(room);
       // friendly game
       if (room['readyCount'] !== 2) {
         socket['role'] = Role.Player2;
         room['player2'] = socket;
         room['type'] = 'friendly';
-        this.gameEngine.gameInit(room);
-        this.gameEngine.gameLoop(room);
       } else {
         // Spectator
         socket['role'] = Role.Spectator;
@@ -169,6 +181,7 @@ export class GameGateway
     return { isSuccess: true };
   }
 
+  // TODO: 초대할 때 누가 초대 됐는지 inviteeId 넣어주기
   @SubscribeMessage('create_room')
   handleCreateRoom(@ConnectedSocket() socket: Socket) {
     const roomId = v4();
@@ -176,11 +189,39 @@ export class GameGateway
 
     this.gameRoomMap.set(roomId, room);
     room['player1'] = socket;
+    room['roomId'] = roomId;
     socket.join(roomId);
     socket['room'] = room;
     socket['role'] = Role.Player1;
     room['readyCount'] = 0;
     return roomId; // 초대하면 초대한 사람이 초대 받을 사람한테 /game/join?roomId={roomId} 보내주고, 초대한 사람은 /game/join?roomId={roomId}로 라우팅이 되어야 함
+  }
+
+  @SubscribeMessage('leave_room')
+  handleLeaveRoom(@ConnectedSocket() socket: Socket) {
+    const room = socket['room'];
+    if (room) {
+      this.disconnectedUserMap.set(socket['ftId'], room);
+      console.log(room['roomId']);
+      socket.leave(room['roomId']);
+      console.log('leave_room');
+      socket['room'] = null;
+    }
+  }
+
+  @SubscribeMessage('decline_invitation')
+  handleDeclineInvitation(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data,
+  ) {
+    const { roomId } = data;
+
+    const room = this.gameRoomMap.get(roomId);
+    if (room /* && room['inviteeId'] === socket['ftId'] */) {
+      socket['room'] = null;
+      room.socketsLeave(roomId);
+      room.emit('decline_invitation'); // 프론트에서 이 이벤트 받으면 alert, /game 리디렉션
+    }
   }
 
   @SubscribeMessage('normal_matching')
