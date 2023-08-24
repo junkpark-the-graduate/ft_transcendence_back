@@ -38,10 +38,20 @@ interface ChatHistoryRequest {
   page: number;
 }
 
+interface inviteGame {
+  memberId: number;
+  roomId: string;
+  user: IUser;
+}
+
 @WebSocketGateway(parseInt(process.env.CHAT_SOCKET_PORT), {
   namespace: 'chat',
   cors: {
-    origin: [process.env.FRONT_END_POINT, "http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: [
+      process.env.FRONT_END_POINT,
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+    ],
     credentials: true,
   },
 })
@@ -73,6 +83,8 @@ export class ChatGateway
 
       this.chatService.removeConnectedMember(channelId, payload.sub);
       this.logger.log(`disconnected : ${socket.id} ${socket.nsp.name}`);
+
+      socket.to(channelId).emit('member_disconnected', { userId: payload.sub });
     } catch (err) {
       throw new UnauthorizedException('Invalid token.');
     }
@@ -91,11 +103,24 @@ export class ChatGateway
 
       await this.chatService.initChannels(channelId);
 
-      await this.chatService.addConnectedMember(channelId, payload.sub, socket);
+      const tmp = await this.chatService.addConnectedMember(
+        channelId,
+        payload.sub,
+        socket,
+      );
+
+      const member = {
+        id: tmp.user.id,
+        name: tmp.user.name,
+        image: tmp.user.image,
+      };
 
       await socket.join(channelId); // join the room based on channelId
 
       this.logger.log(`connected : ${socket.id} ${socket.nsp.name} ${token}`);
+
+      // channel 에 접속된 클라이언트 에게 접속된 유저 정보 전달
+      socket.to(channelId).emit('member_connected', { member });
     } catch (err) {
       console.log(err);
       throw new InternalServerErrorException(err.message);
@@ -147,6 +172,38 @@ export class ChatGateway
     );
 
     socket.emit('chat_history', { chatHistory });
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('invite_game')
+  async handleInviteChat(
+    @MessageBody() inviteGame: inviteGame,
+    @ConnectedSocket() socket: Socket,
+  ) {
+    const channelId = socket.handshake.query.channelId as string;
+    const { userId } = socket.data;
+    const { memberId, roomId, user } = inviteGame;
+
+    const member = await this.chatService.findConnectedMember(
+      channelId,
+      memberId,
+    );
+
+    // TODO 접속중인 member 인지 확인
+    // if (!member) {
+    //   socket.emit('not_connected_member');
+    //   return;
+    // }
+
+    member.socket.emit('open_invite_game_modal', { roomId, user });
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('get_connected_members')
+  async getConnectedMembers(@ConnectedSocket() socket: Socket) {
+    const channelId = socket.handshake.query.channelId as string;
+    const connectedMembers = this.chatService.getConnectedMembers(channelId);
+    return connectedMembers;
   }
 
   public async kickMember(channelId: number, userId: number) {

@@ -87,11 +87,27 @@ export class ChatService {
       name: member.user.name,
       image: member.user.image,
     });
+    return member;
   }
 
   getMemberInChannel(channelId: string, userId: number) {
     if (!this.channels[channelId]) return null;
     return this.channels[channelId].connectedMembers.get(userId);
+  }
+
+  getConnectedMembers(channelId: string) {
+    if (!this.channels[channelId]) return null;
+
+    const connectedMembers = this.channels[channelId].connectedMembers;
+    const membersInfo = [];
+    connectedMembers.forEach((member) => {
+      membersInfo.push({
+        id: member.id,
+        name: member.name,
+        image: member.image,
+      });
+    });
+    return membersInfo;
   }
 
   addMutedMember(
@@ -161,5 +177,11 @@ export class ChatService {
       .getMany();
 
     return ret.reverse();
+  }
+
+  async findConnectedMember(channelId: string, userId: number) {
+    const channel = this.channels[channelId];
+    if (!channel) return null;
+    return channel.connectedMembers.get(userId);
   }
 }
