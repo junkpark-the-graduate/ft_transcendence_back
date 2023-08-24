@@ -5,7 +5,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './user.entity';
 import { MulterModule } from '@nestjs/platform-express';
 import { join } from 'path';
-import { UserGateway } from './user.gateway';
 
 @Module({
   imports: [
@@ -15,7 +14,7 @@ import { UserGateway } from './user.gateway';
     }),
   ],
   controllers: [UserController],
-  providers: [UserService, UserGateway],
+  providers: [UserService],
   exports: [UserService],
 })
 export class UserModule {}

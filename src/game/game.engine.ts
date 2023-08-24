@@ -80,14 +80,18 @@ export class GameEngine {
   }
 
   gameLoop(room: any) {
+    let timeout = 0;
     const ready_interval = setInterval(() => {
-      if (room['readyCount'] === 2) {
+      console.log('timeout: ', timeout);
+      if (room['readyCount'] === 2 || timeout > 30) {
+        // TODO: 친선전에서 30초가 넘어가면 시작될 것 같음
         clearInterval(ready_interval);
         const interval = setInterval(() => {
           room.emit('game', this.gameUpdate(room));
         }, 1000 / 60);
         room['interval'] = interval;
       }
+      ++timeout;
     }, 1000);
   }
 
@@ -167,9 +171,12 @@ export class GameEngine {
         },
       },
     });
+    room.fetchSockets().then((sockets) => {
+      sockets.forEach((socket) => {
+        socket['room'] = null;
+      });
+    });
     room.socketsLeave(room['roomId']);
-    player1['room'] = null;
-    player2['room'] = null;
   }
 
   private checkBoundaryCollision(room: any, ball: any) {
@@ -185,7 +192,6 @@ export class GameEngine {
         room.score.player2++;
         ball.dir.y = -1;
       }
-      room.emit('score', { score: room.score });
       ball.pos.x = 0;
       ball.pos.y = 0;
 
@@ -224,6 +230,7 @@ export class GameEngine {
     this.checkPaddleCollision(ball, paddle2);
 
     return {
+      score: room.score,
       paddle1: paddle1,
       paddle2: paddle2,
       ball: {
