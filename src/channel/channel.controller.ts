@@ -168,8 +168,8 @@ export class ChannelController {
   @ApiOperation({ summary: '채널 조회 API', description: '채널 1개 조회' })
   // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
   @ApiResponse({ status: 200, description: 'OK' })
-  findOne(@Request() req, @Param('channelId') channelId: number) {
-    return this.channelService.findOne(channelId, [], req.user.id);
+  findOne(@Param('channelId') channelId: number) {
+    return this.channelService.findOne(channelId);
   }
 
   // /channel/:channelId/member ---------------------------------------------------------------------------------------------------------------
