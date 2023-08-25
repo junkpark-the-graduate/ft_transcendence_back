@@ -274,9 +274,13 @@ export class ChannelService {
     }
   }
 
-  async findOne(channelId: number | string, relations?: string[]) {
+  async findOne(
+    channelId: number | string,
+    relations?: string[],
+    userId?: number,
+  ) {
     if (typeof channelId === 'string') channelId = parseInt(channelId);
-    if (!relations)
+    if (!relations || relations.length === 0)
       relations = [
         'channelMembers',
         'channelMembers.user',
@@ -293,6 +297,13 @@ export class ChannelService {
       relations: relations,
     });
     if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
+
+    if (channel.type === EChannelType.direct) {
+      const directMember = channel.channelMembers.find(
+        (member) => member.userId !== userId,
+      );
+      channel['nameOfDirect'] = directMember.user.name;
+    }
 
     return channel;
   }
