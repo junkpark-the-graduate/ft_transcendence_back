@@ -34,7 +34,7 @@ import { TfaAuthService } from './services/tfa-auth.service';
           },
         },
         defaults: {
-          from: `"nest-modules" <${process.env.GMAIL_ID}>`,
+          from: `"ping-pong" <${process.env.GMAIL_ID}>`,
         },
       }),
     }),
