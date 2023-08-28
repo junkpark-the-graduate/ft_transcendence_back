@@ -46,6 +46,7 @@ export class ChatService {
   private channels: Map<string, Channel> = new Map<string, Channel>();
 
   removeConnectedMember(channelId: string, userId: number) {
+    if (!this.channels[channelId]) return;
     this.channels[channelId].connectedMembers.delete(userId);
   }
 

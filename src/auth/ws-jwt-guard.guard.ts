@@ -13,18 +13,14 @@ export class WsJwtGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const socket: Socket = context.switchToWs().getClient();
-
     const token = socket.handshake.query.token as string;
-    if (!token) {
-      throw new UnauthorizedException('Token not found.');
-    }
     try {
       const payload = await this.jwtService.verifyAsync(token);
       socket.data = { userId: payload.sub }; // Save user data in socket object for future use
 
       return true;
     } catch (err) {
-      throw new UnauthorizedException('Invalid token.');
+      socket.emit('unauthorized', { message: 'Invalid token' });
     }
   }
 }

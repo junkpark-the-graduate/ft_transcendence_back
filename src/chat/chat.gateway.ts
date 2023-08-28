@@ -74,30 +74,18 @@ export class ChatGateway
   async handleDisconnect(@ConnectedSocket() socket: Socket) {
     const token = socket.handshake.query.token as string;
     const channelId = socket.handshake.query.channelId as string; // get channelId from client during handshake
+    const payload = await this.jwtService.verifyAsync(token);
 
-    if (!token) {
-      throw new UnauthorizedException('Token not found.');
-    }
-    try {
-      const payload = await this.jwtService.verifyAsync(token);
+    this.logger.log(`disconnected : ${socket.id} ${socket.nsp.name}`);
+    this.chatService.removeConnectedMember(channelId, payload.sub);
 
-      this.chatService.removeConnectedMember(channelId, payload.sub);
-      this.logger.log(`disconnected : ${socket.id} ${socket.nsp.name}`);
-
-      socket.to(channelId).emit('member_disconnected', { userId: payload.sub });
-    } catch (err) {
-      throw new UnauthorizedException('Invalid token.');
-    }
+    socket.to(channelId).emit('member_disconnected', { userId: payload.sub });
   }
 
   async handleConnection(@ConnectedSocket() socket: Socket) {
-    const token = socket.handshake.query.token as string;
-    const channelId = socket.handshake.query.channelId as string; // get channelId from client during handshake
-
-    if (!token) {
-      throw new UnauthorizedException('Token not found.');
-    }
     try {
+      const token = socket.handshake.query.token as string;
+      const channelId = socket.handshake.query.channelId as string; // get channelId from client during handshake
       // Todo: verifyAsync의 반환값 타입을 any가 아닌 JwtPayload로 바꾸기
       const payload: any = await this.jwtService.verifyAsync(token);
 
@@ -122,8 +110,7 @@ export class ChatGateway
       // channel 에 접속된 클라이언트 에게 접속된 유저 정보 전달
       socket.to(channelId).emit('member_connected', { member });
     } catch (err) {
-      console.log(err);
-      throw new InternalServerErrorException(err.message);
+      socket.disconnect();
     }
   }
 
@@ -188,12 +175,6 @@ export class ChatGateway
       channelId,
       memberId,
     );
-
-    // TODO 접속중인 member 인지 확인
-    // if (!member) {
-    //   socket.emit('not_connected_member');
-    //   return;
-    // }
 
     member.socket.emit('open_invite_game_modal', { roomId, user });
   }
