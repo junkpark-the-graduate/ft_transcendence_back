@@ -65,7 +65,7 @@ export class GameService {
       gameType: gameType,
     });
 
-    if (sort === 'ASC') {
+    if (sort === 'DESC') {
       gameEntities.reverse();
     }
 

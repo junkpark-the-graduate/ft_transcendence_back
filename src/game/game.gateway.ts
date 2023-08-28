@@ -116,9 +116,7 @@ export class GameGateway
       this.userService.updateUserStatus(socket['ftId'], EUserStatus.online);
     } catch (error) {
       console.log('handleConnection error: ', error);
-      setTimeout(() => {
-        socket.disconnect();
-      }, 500);
+      socket.disconnect();
     }
   }
 
@@ -145,11 +143,13 @@ export class GameGateway
   handleJoinRoom(@ConnectedSocket() socket: Socket, @MessageBody() data) {
     const { roomId } = data;
     const room = this.gameRoomMap.get(roomId);
+    const ftId = socket['ftId'];
+
     if (!room) {
+      this.disconnectedUserMap.delete(ftId);
       return { isSuccess: false };
     }
     if (!socket['room']) {
-      const ftId = socket['ftId'];
       // reconnection
       if (this.disconnectedUserMap.get(ftId)) {
         this.disconnectedUserMap.delete(ftId);
