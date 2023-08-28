@@ -58,7 +58,9 @@ export class ChannelEntity {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => ChatEntity, (chat) => chat.channel)
+  @OneToMany(() => ChatEntity, (chat) => chat.channel, {
+    cascade: true,
+  })
   chats: ChatEntity[];
 
   @OneToMany(

@@ -41,7 +41,9 @@ export class ChatEntity {
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
-  @ManyToOne(() => ChannelEntity, (channel) => channel.chats)
+  @ManyToOne(() => ChannelEntity, (channel) => channel.chats, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'channelId' })
   channel: ChannelEntity;
 }

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -55,21 +56,21 @@ export class ChannelMemberService {
 
     if (channel.type === EChannelType.direct) {
       if (channel.channelMembers.length >= 2)
-        throw new UnauthorizedException('채널 인원이 가득 찼습니다.');
+        throw new BadRequestException('채널 인원이 가득 찼습니다.');
     } else if (channel.type === EChannelType.protected) {
       const isMatch = await bcrypt.compare(
         createChannelMemberDto.password,
         channel.password,
       );
-      if (!isMatch) throw new UnauthorizedException('비밀번호가 틀렸습니다.');
+      if (!isMatch) throw new BadRequestException('비밀번호가 틀렸습니다.');
     } else if (channel.type === EChannelType.private) {
-      throw new UnauthorizedException('비밀 채널입니다.');
+      throw new BadRequestException('비밀 채널입니다.');
     }
 
     const bannedMember = channel.channelBannedMembers.find(
       (member) => member.userId === createChannelMemberDto.userId,
     );
-    if (bannedMember) throw new UnauthorizedException('차단된 사용자입니다.');
+    if (bannedMember) throw new BadRequestException('차단된 사용자입니다.');
 
     const channelMember = this.channelMemberRepository.create(
       createChannelMemberDto,

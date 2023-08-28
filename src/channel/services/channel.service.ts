@@ -4,6 +4,7 @@ import {
   ConflictException,
   UnauthorizedException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { CreateChannelDto } from '../dto/create-channel.dto';
@@ -50,7 +51,7 @@ export class ChannelService {
       },
     });
 
-    if (tmp) throw new ConflictException('이미 존재하는 채널 이름입니다.');
+    if (tmp) throw new BadRequestException('이미 존재하는 채널 이름입니다.');
 
     if (type === EChannelType.protected && !password) {
       throw new InternalServerErrorException(
@@ -96,7 +97,7 @@ export class ChannelService {
 
   async createDirectChannel(userId: number, memberId: number) {
     if (userId === memberId) {
-      throw new ConflictException(
+      throw new BadRequestException(
         '자신에게는 direct 채널을 생성할 수 없습니다.',
       );
     }
@@ -221,8 +222,8 @@ export class ChannelService {
           name: updateChannelDto.name,
         },
       });
-      if (tmp.id !== channelId && tmp)
-        throw new ConflictException('이미 존재하는 채널 이름입니다.');
+      if (tmp && tmp.id !== channelId)
+        throw new BadRequestException('이미 존재하는 채널 이름입니다.');
     }
 
     if (updateChannelDto.type) {
@@ -425,7 +426,7 @@ export class ChannelService {
     if (!channelMember)
       throw new NotFoundException('존재하지 않는 채널 멤버입니다.');
     if (!channelMember.isAdmin)
-      throw new UnauthorizedException('채널 관리자가 아닙니다.');
+      throw new BadRequestException('채널 관리자가 아닙니다.');
 
     return true;
   }
@@ -447,10 +448,10 @@ export class ChannelService {
 
     if (!channel) throw new NotFoundException('존재하지 않는 채널입니다.');
     if (channel.ownerId !== userId)
-      throw new UnauthorizedException('채널 소유자가 아닙니다.');
+      throw new BadRequestException('채널 소유자가 아닙니다.');
 
     if (memberId === userId)
-      throw new UnauthorizedException('채널 소유자입니다.');
+      throw new BadRequestException('채널 소유자입니다.');
 
     const member = channel.channelMembers.find(
       (member) => member.userId === memberId,
@@ -482,25 +483,25 @@ export class ChannelService {
     );
     if (!admin) throw new NotFoundException('채널 멤버가 아닙니다.');
     if (!admin.isAdmin)
-      throw new UnauthorizedException('채널 관리자가 아닙니다.');
+      throw new BadRequestException('채널 관리자가 아닙니다.');
     return admin;
   }
 
   checkIsChannelOwner(channel: ChannelEntity, userId: number) {
     if (channel.ownerId !== userId)
-      throw new UnauthorizedException('채널 소유자가 아닙니다.');
+      throw new BadRequestException('채널 소유자가 아닙니다.');
   }
 
   checkIsNotChannelOwner(channel: ChannelEntity, userId: number) {
     if (channel.ownerId === userId)
-      throw new UnauthorizedException(
+      throw new BadRequestException(
         '채널 소유자에게는 해당 작업을 수행할 수 없습니다.',
       );
   }
 
   checkIsMe(userId: number, memberId: number) {
     if (userId === memberId)
-      throw new UnauthorizedException(
+      throw new BadRequestException(
         '자신에게는 해당 작업을 수행할 수 없습니다.',
       );
   }
