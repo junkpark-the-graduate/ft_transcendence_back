@@ -53,12 +53,14 @@ export class AuthService {
           name: `#${id}`,
           image: image.versions.medium,
         });
+        const accessToken = await this.createAccessToken(user.id);
+        return { accessToken, isFirstLogin: true };
       }
       if (user.twoFactorEnabled) {
         return this.tfaAuthService.signInTwoFactorToken(user);
       } else {
         const accessToken = await this.createAccessToken(user.id);
-        return { accessToken };
+        return { accessToken, isFirstLogin: false };
       }
     } catch (err) {
       console.log(err);
