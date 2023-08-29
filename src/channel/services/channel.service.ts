@@ -282,7 +282,7 @@ export class ChannelService {
         'channelMembers',
         'channelMembers.user',
         'channelMutedMembers',
-        'channelMutedMembers.user', //Todo: 필요 없으면 지워야함
+        'channelMutedMembers.user',
         'channelBannedMembers',
         'channelBannedMembers.user',
       ];
@@ -364,7 +364,6 @@ export class ChannelService {
   async findAllChannelMember(
     channelId: number,
   ): Promise<ChannelMemberEntity[]> {
-    // TODO: 채널관리만 조회할 수 있도록
     const channelMembers = await this.channelMemberRepository.find({
       where: {
         channelId: channelId,
@@ -378,7 +377,6 @@ export class ChannelService {
   async findAllNonChannelMember(
     channelId: number,
   ): Promise<ChannelMemberEntity[]> {
-    // TODO: 채널관리만 조회할 수 있도록
     const channelMembers = await this.channelMemberRepository.find({
       where: {
         channelId: channelId,
@@ -392,7 +390,6 @@ export class ChannelService {
   async findAllChannelMutedMember(
     channelId: number,
   ): Promise<ChannelMutedMemberEntity[]> {
-    // TODO: 채널관리만 조회할 수 있도록
     const channelMutedMembers = await this.channelMutedMemberRepository.find({
       where: {
         channelId: channelId,
@@ -405,7 +402,6 @@ export class ChannelService {
   async findAllChannelBannedMember(
     channelId: number,
   ): Promise<ChannelBannedMemberEntity[]> {
-    // TODO: 채널관리만 조회할 수 있도록
     const channelBannedMembers = await this.channelBannedMemberRepository.find({
       where: {
         channelId: channelId,

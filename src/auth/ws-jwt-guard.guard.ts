@@ -20,7 +20,7 @@ export class WsJwtGuard implements CanActivate {
 
       return true;
     } catch (err) {
-      socket.emit('unauthorized', { message: 'Invalid token' });
+      socket.emit('error');
     }
   }
 }

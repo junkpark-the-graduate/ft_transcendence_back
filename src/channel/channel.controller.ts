@@ -73,7 +73,7 @@ export class ChannelController {
   @UseInterceptors(ClassSerializerInterceptor)
   @Post()
   @ApiOperation({ summary: '채널 생성 API', description: '채널을 생성' })
-  @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity })
   @ApiResponse({ status: 201, description: 'Created' })
   create(@Request() req, @Body() createChannelDto: CreateChannelDto) {
     console.log('createChannelDto', createChannelDto);
@@ -87,7 +87,7 @@ export class ChannelController {
     summary: '1:1 채널 생성 API',
     description: '1:1 채널을 생성',
   })
-  @ApiCreatedResponse({ description: '채널 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  @ApiCreatedResponse({ description: '채널 생성', type: ChannelEntity })
   @ApiResponse({ status: 201, description: 'Created' })
   createDirectChannel(@Request() req, @Query('memberId') memberId: number) {
     return this.channelService.createDirectChannel(req.user.id, memberId);
@@ -135,7 +135,7 @@ export class ChannelController {
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
   @ApiOperation({ summary: '채널 조회 API', description: '모든 채널 조회' })
-  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity })
   @ApiResponse({ status: 200, description: 'OK' })
   findAll() {
     return this.channelService.findAll();
@@ -166,7 +166,7 @@ export class ChannelController {
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':channelId')
   @ApiOperation({ summary: '채널 조회 API', description: '채널 1개 조회' })
-  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity })
   @ApiResponse({ status: 200, description: 'OK' })
   findOne(@Param('channelId') channelId: number) {
     return this.channelService.findOne(channelId);
@@ -180,7 +180,7 @@ export class ChannelController {
     summary: '채널 멤버 조회 API',
     description: '모든 채널 멤버 조히',
   })
-  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity })
   @ApiResponse({ status: 200, description: 'OK' })
   findAllChannelMember(@Param('channelId') channelId: number) {
     return this.channelService.findAllChannelMember(channelId);
@@ -249,7 +249,7 @@ export class ChannelController {
     summary: '채널 뮤트 멤버 조회 API',
     description: '모든 채널 뮤트 멤버 조회',
   })
-  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity }) // Todo: ChannelEntity 반환값에서 password 제거
+  // @ApiCreatedResponse({ description: '채널을 생성', type: ChannelEntity })
   @ApiResponse({ status: 200, description: 'OK' })
   findAllChannelMutedMember(@Param('channelId') channelId: number) {
     return this.channelService.findAllChannelMutedMember(channelId);

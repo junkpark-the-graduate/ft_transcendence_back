@@ -1,10 +1,4 @@
-import {
-  InternalServerErrorException,
-  Logger,
-  UnauthorizedException,
-  NotFoundException,
-  UseGuards,
-} from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import {
   ConnectedSocket,
@@ -21,7 +15,6 @@ import { ChannelService } from 'src/channel/services/channel.service';
 import { ChatService } from './chat.service';
 import { DeleteChannelMutedMemberDto } from 'src/channel/dto/delete-channel-muted-member.dto';
 import { ChatEntity } from './chat.entity';
-// import { JwtPayload } from 'src/auth/jwt-payload.interface'; // any 타입 대신 사용할수도
 
 interface IUser {
   id: number;
@@ -84,26 +77,10 @@ export class ChatGateway
     socket.to(channelId).emit('member_disconnected', { userId: payload.sub });
   }
 
-  @UseGuards(WsJwtGuard)
-  @SubscribeMessage('left')
-  async handleLeft(@ConnectedSocket() socket: Socket) {
-    const token = socket.handshake.query.token as string;
-    const channelId = socket.handshake.query.channelId as string; // get channelId from client during handshake
-    const payload = await this.jwtService.verifyAsync(token);
-
-    this.logger.log(
-      `$$$$$$$$$$$$$$$$$$$$$$left : ${socket.id} ${socket.nsp.name}`,
-    );
-    this.chatService.removeConnectedMember(channelId, payload.sub);
-
-    socket.to(channelId).emit('member_disconnected', { userId: payload.sub });
-  }
-
   async handleConnection(@ConnectedSocket() socket: Socket) {
     try {
       const token = socket.handshake.query.token as string;
       const channelId = socket.handshake.query.channelId as string; // get channelId from client during handshake
-      // Todo: verifyAsync의 반환값 타입을 any가 아닌 JwtPayload로 바꾸기
       const payload: any = await this.jwtService.verifyAsync(token);
 
       await this.chatService.initChannels(channelId);
@@ -127,7 +104,7 @@ export class ChatGateway
       // channel 에 접속된 클라이언트 에게 접속된 유저 정보 전달
       socket.to(channelId).emit('member_connected', { member });
     } catch (err) {
-      socket.disconnect();
+      socket.emit('error');
     }
   }
 
@@ -149,6 +126,7 @@ export class ChatGateway
       this.chatService.removeMutedMember(channelId, userId);
       this.chatService.saveMessage(userId, channelId, chat.message);
     }
+    console.log(chat.message);
 
     socket.to(channelId).emit('new_chat', {
       message: chat.message,

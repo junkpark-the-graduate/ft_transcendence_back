@@ -143,9 +143,8 @@ export class ChatService {
     const now: Date = new Date();
     const diff: number = now.getTime() - createdAt.getTime();
 
-    // TODO: 원상복구 꼭하기
-    //if (diff >= mutedTime)
-    if (diff >= 0.25 * 60000) return true;
+    if (diff >= mutedTime) return true; // 5min
+    // if (diff >= 0.25 * 60000) return true; // 15sec
     return false;
   }
 
@@ -160,7 +159,6 @@ export class ChatService {
       channel: { id: parseInt(channelId) },
       message: message,
     });
-    console.log('saveChat', res);
     this.chatRepository.save(res);
   }
 

@@ -47,13 +47,6 @@ export class ChannelMemberService {
       return channel;
     }
 
-    // Todo channel type에 따른 참여 가능 여부 체크
-    // channel type	| pw	| search	| join ability
-    // direct	      | x	  | x	      | 2명만 참여가능
-    // public	      | x	  | o       | 누구나 참여가능
-    // private	    | x	  | x	      | 초대로만 참여가능
-    // protected	  | o	  | o	      | pw 입력 후 참여가능
-
     if (channel.type === EChannelType.direct) {
       if (channel.channelMembers.length >= 2)
         throw new BadRequestException('채널 인원이 가득 찼습니다.');
