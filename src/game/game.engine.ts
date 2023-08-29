@@ -60,6 +60,7 @@ export class GameEngine {
         x: 0,
         y: 1,
       },
+      speed: BALL_SPEED,
     };
     room['score'] = {
       player1: 0,
@@ -193,6 +194,7 @@ export class GameEngine {
       }
       ball.pos.x = 0;
       ball.pos.y = 0;
+      ball.speed = BALL_SPEED;
 
       const result = this.getResult(room);
       if (result) {
@@ -212,7 +214,7 @@ export class GameEngine {
       ) {
         ball.dir.x = (Math.random() - 0.5) * 2;
         ball.dir.y = -ball.dir.y;
-        // if (BALL_SPEED * 1.2 < PADDLE_HEIGHT) BALL_SPEED *= 1.2;
+        if (ball.speed * 1.1 < PADDLE_HEIGHT) ball.speed *= 1.1;
       }
     }
   }
@@ -222,8 +224,8 @@ export class GameEngine {
     const paddle1 = player1['paddle'];
     const paddle2 = player2['paddle'];
 
-    ball.pos.x += ball.dir.x * BALL_SPEED;
-    ball.pos.y += ball.dir.y * BALL_SPEED;
+    ball.pos.x += ball.dir.x * ball.speed;
+    ball.pos.y += ball.dir.y * ball.speed;
     this.checkBoundaryCollision(room, ball);
     this.checkPaddleCollision(ball, paddle1);
     this.checkPaddleCollision(ball, paddle2);
