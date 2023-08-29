@@ -153,7 +153,8 @@ export class ChatGateway
       page,
     );
 
-    socket.emit('chat_history', { chatHistory });
+    console.log(chatHistory);
+    return chatHistory;
   }
 
   @UseGuards(WsJwtGuard)
