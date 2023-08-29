@@ -76,7 +76,24 @@ export class ChatGateway
     const channelId = socket.handshake.query.channelId as string; // get channelId from client during handshake
     const payload = await this.jwtService.verifyAsync(token);
 
-    this.logger.log(`disconnected : ${socket.id} ${socket.nsp.name}`);
+    this.logger.log(
+      `disconnected!!!!!!!!!!!!!!! : ${socket.id} ${socket.nsp.name}`,
+    );
+    this.chatService.removeConnectedMember(channelId, payload.sub);
+
+    socket.to(channelId).emit('member_disconnected', { userId: payload.sub });
+  }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('left')
+  async handleLeft(@ConnectedSocket() socket: Socket) {
+    const token = socket.handshake.query.token as string;
+    const channelId = socket.handshake.query.channelId as string; // get channelId from client during handshake
+    const payload = await this.jwtService.verifyAsync(token);
+
+    this.logger.log(
+      `$$$$$$$$$$$$$$$$$$$$$$left : ${socket.id} ${socket.nsp.name}`,
+    );
     this.chatService.removeConnectedMember(channelId, payload.sub);
 
     socket.to(channelId).emit('member_disconnected', { userId: payload.sub });
