@@ -19,7 +19,7 @@ export class CreateUserDto {
   @ApiProperty()
   readonly email: string;
 
-  @IsNotEmpty()
+  // @IsNotEmpty()
   @ApiProperty()
   readonly image: string;
 }

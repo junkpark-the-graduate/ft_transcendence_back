@@ -19,22 +19,22 @@ export class AuthController {
   @Post('/')
   @ApiOperation({ summary: 'sign in with 42 intra' })
   @ApiCreatedResponse({ description: 'sign in success', type: UserEntity })
-  async signIn(@Query() authDto: AuthDto) {
+  signIn(@Query() authDto: AuthDto) {
     return this.authService.signIn(authDto);
   }
 
   @Post('/tfa')
   @ApiOperation({ summary: 'signIn with twoFactor' })
   @ApiCreatedResponse({ description: '', type: UserEntity })
-  async signInWithTwoFactor(@Query() twoFactorTokenDto: TwoFactorTokenDto) {
+  signInWithTwoFactor(@Query() twoFactorTokenDto: TwoFactorTokenDto) {
     console.log('twoFactorTokenDto', twoFactorTokenDto);
     return this.tfaAuthService.authTwoFactorToken(twoFactorTokenDto);
   }
 
-  @Post('/tfa/verification')
+  @Post('/tfa-verification')
   @ApiOperation({ summary: 'twoFactor verification' })
   @ApiCreatedResponse({ description: '' })
-  async verifyTwoFactorCode(@Query() twoFactorCodeDto: TwoFactorCodeDto) {
+  verifyTwoFactorCode(@Query() twoFactorCodeDto: TwoFactorCodeDto) {
     console.log('twoFactorCodeDto', twoFactorCodeDto);
     return this.tfaAuthService.verifyTwoFactorCode(twoFactorCodeDto);
   }

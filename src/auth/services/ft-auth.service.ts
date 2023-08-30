@@ -11,7 +11,7 @@ export class FtAuthService {
         client_id: process.env.FT_CLIENT_ID,
         client_secret: process.env.FT_CLIENT_SECRET,
         code: authDto.code,
-        redirect_uri: 'http://127.0.0.1:3000/auth',
+        redirect_uri: `${process.env.FRONT_END_POINT}/auth`,
       });
       return res.data.access_token;
     } catch (err) {
